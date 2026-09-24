@@ -1,0 +1,33 @@
+# Roadmap de developpement - Waanter
+
+## Phase 1 - MVP gratuit
+
+- [x] Etape 1 - Initialisation du repository
+- [x] Etape 2 - Docker + PostgreSQL
+- [ ] Etape 3 - FastAPI
+- [ ] Etape 4 - SQLAlchemy + Alembic
+- [ ] Etape 5 - Modele Users
+- [ ] Etape 6 - Authentification
+- [ ] Etape 7 - Shops + multi-tenancy
+- [ ] Etape 8 - Categories
+- [ ] Etape 9 - Products
+- [ ] Etape 10 - Frontend Next.js
+- [ ] Etape 11 - Dashboard
+- [ ] Etape 12 - Boutique publique
+- [ ] Etape 13 - Panier
+- [ ] Etape 14 - Commandes
+- [ ] Etape 15 - Tests
+- [ ] Etape 16 - Deploiement
+- [ ] Etape 17 - Premier commercant pilote
+
+## Phase 2 - Fonctionnalites pro
+- [ ] Etape 18 - WhatsApp
+- [ ] Etape 19 - Wave
+- [ ] Etape 20 - Orange Money
+
+## Phase 3 - Automatisation
+- [ ] Etape 21 - n8n
+
+## Suite
+- [ ] Etape 22 - Abonnements
+- [ ] Etape 23 - AI Agent
