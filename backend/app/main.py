@@ -1,4 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from app.database import get_db
 
 app = FastAPI(
     title="Waantér API",
@@ -12,6 +16,15 @@ def health_check():
     """
     Endpoint de vérification de santé du service.
     Ne dépend d'aucune ressource externe (base de données, etc.)
-    à ce stade du développement.
     """
     return {"status": "ok", "service": "waanter-api"}
+
+
+@app.get("/health/db")
+def health_check_db(db: Session = Depends(get_db)):
+    """
+    Vérifie que l'API peut réellement se connecter à PostgreSQL
+    et exécuter une requête simple.
+    """
+    db.execute(text("SELECT 1"))
+    return {"status": "ok", "database": "connected"}
