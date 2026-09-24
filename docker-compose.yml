@@ -19,6 +19,22 @@ services:
     networks:
       - waanter_network
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: waanter_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - waanter_network
+
 networks:
   waanter_network:
     driver: bridge
