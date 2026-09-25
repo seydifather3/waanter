@@ -7,7 +7,7 @@
 - [x] Etape 3 - FastAPI
 - [x] Etape 4 - SQLAlchemy + Alembic
 - [x] Etape 5 - Modele Users
-- [ ] Etape 6 - Authentification
+- [x] Etape 6 - Authentification
 - [ ] Etape 7 - Shops + multi-tenancy
 - [ ] Etape 8 - Categories
 - [ ] Etape 9 - Products
