@@ -5,10 +5,7 @@ from sqlalchemy import engine_from_config, pool
 
 from app.config import settings
 from app.database import Base
-
-# Import explicite des modèles ici dans le futur, pour qu'Alembic
-# les détecte automatiquement lors de --autogenerate.
-# Exemple (Étape 5) : from app.models.user import User
+from app import models  # noqa: F401 — nécessaire pour qu'Alembic détecte les modèles
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)
