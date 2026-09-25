@@ -6,7 +6,7 @@
 - [x] Etape 2 - Docker + PostgreSQL
 - [x] Etape 3 - FastAPI
 - [x] Etape 4 - SQLAlchemy + Alembic
-- [ ] Etape 5 - Modele Users
+- [x] Etape 5 - Modele Users
 - [ ] Etape 6 - Authentification
 - [ ] Etape 7 - Shops + multi-tenancy
 - [ ] Etape 8 - Categories

@@ -4,11 +4,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """
     Configuration centralisée de l'application, lue depuis les
-    variables d'environnement (fichier .env en local, ou variables
-    injectées par Docker Compose / l'hébergeur en production).
+    variables d'environnement.
     """
 
     database_url: str
+
+    jwt_secret_key: str
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60 * 24 * 7  # 7 jours
 
     model_config = SettingsConfigDict(
         env_file=".env",
