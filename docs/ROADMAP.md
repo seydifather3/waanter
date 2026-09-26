@@ -10,7 +10,7 @@
 - [x] Etape 6 - Authentification
 - [x] Etape 7 - Shops + multi-tenancy
 - [x] Etape 8 - Categories
-- [ ] Etape 9 - Products
+- [x] Etape 9 - Products
 - [ ] Etape 10 - Frontend Next.js
 - [ ] Etape 11 - Dashboard
 - [ ] Etape 12 - Boutique publique
