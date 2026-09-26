@@ -8,7 +8,7 @@
 - [x] Etape 4 - SQLAlchemy + Alembic
 - [x] Etape 5 - Modele Users
 - [x] Etape 6 - Authentification
-- [ ] Etape 7 - Shops + multi-tenancy
+- [x] Etape 7 - Shops + multi-tenancy
 - [ ] Etape 8 - Categories
 - [ ] Etape 9 - Products
 - [ ] Etape 10 - Frontend Next.js
