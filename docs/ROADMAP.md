@@ -9,7 +9,7 @@
 - [x] Etape 5 - Modele Users
 - [x] Etape 6 - Authentification
 - [x] Etape 7 - Shops + multi-tenancy
-- [ ] Etape 8 - Categories
+- [x] Etape 8 - Categories
 - [ ] Etape 9 - Products
 - [ ] Etape 10 - Frontend Next.js
 - [ ] Etape 11 - Dashboard
