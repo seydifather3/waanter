@@ -3,7 +3,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.api.v1 import auth, shops, categories
+from app.api.v1 import auth, shops, categories, products
 
 app = FastAPI(
     title="Waantér API",
@@ -14,6 +14,7 @@ app = FastAPI(
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(shops.router, prefix="/api/v1")
 app.include_router(categories.router, prefix="/api/v1")
+app.include_router(products.router, prefix="/api/v1")
 
 
 @app.get("/health")
