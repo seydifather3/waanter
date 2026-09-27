@@ -30,7 +30,7 @@ export default function RegisterPage() {
 
       // 2. Connecter automatiquement le commerçant (moins de friction)
       const loginData = await api.post<LoginResponse>("/api/v1/auth/login", {
-        email,
+        identifier: email,
         password,
       });
       saveToken(loginData.access_token);

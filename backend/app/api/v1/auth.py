@@ -39,14 +39,20 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
 @router.post("/login", response_model=Token)
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
     """
-    Vérifie les identifiants et renvoie un token JWT en cas de succès.
+    Vérifie les identifiants (email ou téléphone) et renvoie un token JWT.
     """
     invalid_credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Email ou mot de passe incorrect",
+        detail="Identifiant ou mot de passe incorrect",
     )
 
-    user = db.query(User).filter(User.email == payload.email).first()
+    user = (
+        db.query(User)
+        .filter(
+            (User.email == payload.identifier) | (User.phone == payload.identifier)
+        )
+        .first()
+    )
     if user is None:
         raise invalid_credentials_exception
 
@@ -61,6 +67,5 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 def get_me(current_user: User = Depends(get_current_user)):
     """
     Renvoie les informations de l'utilisateur actuellement authentifié.
-    Sert à vérifier que le token JWT fonctionne correctement.
     """
     return current_user
