@@ -43,3 +43,33 @@ export interface Product {
   created_at: string;
   updated_at: string;
 }
+
+export interface PublicShop {
+  name: string;
+  slug: string;
+  description: string | null;
+  logo_url: string | null;
+  phone: string;
+  address: string | null;
+  city: string | null;
+}
+
+export interface PublicCategory {
+  id: string;
+  name: string;
+}
+
+export interface PublicProduct {
+  id: string;
+  category_id: string | null;
+  name: string;
+  description: string | null;
+  price: string;
+  image_url: string | null;
+  in_stock: boolean;
+}
+
+export interface PublicCatalog {
+  categories: PublicCategory[];
+  products: PublicProduct[];
+}
