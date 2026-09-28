@@ -1,12 +1,83 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { api, ApiError } from "../lib/api";
+import { clearToken } from "../lib/auth";
+import type { Shop, User } from "../lib/types";
+
 export default function DashboardPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [shop, setShop] = useState<Shop | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const me = await api.get<User>("/api/v1/auth/me");
+        setUser(me);
+
+        try {
+          const myShop = await api.get<Shop>("/api/v1/shops/me");
+          setShop(myShop);
+        } catch (err) {
+          // 404 = pas encore de boutique : cas normal, pas une erreur
+          if (!(err instanceof ApiError && err.status === 404)) {
+            throw err;
+          }
+        }
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          // Token expiré ou invalide
+          clearToken();
+          router.replace("/login");
+          return;
+        }
+        setError("Impossible de charger vos informations");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    load();
+  }, [router]);
+
+  if (isLoading) {
+    return <p className="text-gray-600">Chargement...</p>;
+  }
+
+  if (error) {
+    return <p className="text-red-600">{error}</p>;
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-6">
+    <div className="space-y-4">
       <h1 className="text-2xl font-bold text-gray-900">
-        Tableau de bord
+        Bonjour {user?.name}
       </h1>
-      <p className="mt-2 text-gray-600">
-        Cette page sera complétée à l&apos;étape suivante.
-      </p>
-    </main>
+
+      {shop ? (
+        <div className="rounded-lg bg-white p-6 shadow">
+          <h2 className="text-lg font-semibold text-gray-900">{shop.name}</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            Lien de votre boutique : /shop/{shop.slug}
+          </p>
+          {shop.city && (
+            <p className="mt-1 text-sm text-gray-600">Ville : {shop.city}</p>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Vous n&apos;avez pas encore de boutique
+          </h2>
+          <p className="mt-1 text-sm text-gray-600">
+            La création de boutique arrive à la prochaine sous-étape (11.2).
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
