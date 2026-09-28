@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "../lib/api";
 import { clearToken } from "../lib/auth";
@@ -30,7 +31,6 @@ export default function DashboardPage() {
         }
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
-          // Token expiré ou invalide
           clearToken();
           router.replace("/login");
           return;
@@ -67,6 +67,12 @@ export default function DashboardPage() {
           {shop.city && (
             <p className="mt-1 text-sm text-gray-600">Ville : {shop.city}</p>
           )}
+          <Link
+            href="/dashboard/settings"
+            className="mt-3 inline-block text-sm font-medium text-blue-700 hover:underline"
+          >
+            Modifier ma boutique
+          </Link>
         </div>
       ) : (
         <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6">
@@ -74,8 +80,14 @@ export default function DashboardPage() {
             Vous n&apos;avez pas encore de boutique
           </h2>
           <p className="mt-1 text-sm text-gray-600">
-            La création de boutique arrive à la prochaine sous-étape (11.2).
+            Créez votre boutique en une minute pour commencer à vendre.
           </p>
+          <Link
+            href="/dashboard/settings"
+            className="mt-3 inline-block rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-800"
+          >
+            Créer ma boutique
+          </Link>
         </div>
       )}
     </div>
