@@ -29,3 +29,17 @@ export interface Category {
   name: string;
   created_at: string;
 }
+
+export interface Product {
+  id: string;
+  shop_id: string;
+  category_id: string | null;
+  name: string;
+  description: string | null;
+  price: string; // le backend renvoie un décimal sous forme de texte
+  image_url: string | null;
+  stock: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
