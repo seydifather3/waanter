@@ -22,3 +22,10 @@ export interface Shop {
   created_at: string;
   updated_at: string;
 }
+
+export interface Category {
+  id: string;
+  shop_id: string;
+  name: string;
+  created_at: string;
+}
