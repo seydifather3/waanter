@@ -32,6 +32,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - waanter_media:/data/media
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,3 +45,4 @@ networks:
 
 volumes:
   waanter_postgres_data:
+  waanter_media:

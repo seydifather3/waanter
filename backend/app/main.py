@@ -1,10 +1,14 @@
+import os
+
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
-from app.api.v1 import auth, shops, categories, products, public
+from app.api.v1 import auth, shops, categories, products, public, uploads
 
 app = FastAPI(
     title="Waantér API",
@@ -24,7 +28,14 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(shops.router, prefix="/api/v1")
 app.include_router(categories.router, prefix="/api/v1")
 app.include_router(products.router, prefix="/api/v1")
+app.include_router(uploads.router, prefix="/api/v1")
 app.include_router(public.router, prefix="/api/v1")
+
+# Sert les images en développement (stockage local).
+# En production, les images seront servies directement par Cloudflare R2.
+if settings.storage_backend == "local":
+    os.makedirs(settings.media_dir, exist_ok=True)
+    app.mount("/media", StaticFiles(directory=settings.media_dir), name="media")
 
 
 @app.get("/health")

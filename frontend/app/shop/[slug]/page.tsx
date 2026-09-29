@@ -81,14 +81,28 @@ export default function PublicShopPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
-        <div className="mx-auto max-w-3xl px-4 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">{shop.name}</h1>
-          {shop.description && (
-            <p className="mt-1 text-sm text-gray-600">{shop.description}</p>
+        <div className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-6">
+          {shop.logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={shop.logo_url}
+              alt={shop.name}
+              className="h-16 w-16 flex-shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-xl font-semibold text-gray-500">
+              {shop.name.charAt(0).toUpperCase()}
+            </div>
           )}
-          <p className="mt-2 text-sm text-gray-500">
-            {[shop.city, shop.phone].filter(Boolean).join(" · ")}
-          </p>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold text-gray-900">{shop.name}</h1>
+            {shop.description && (
+              <p className="mt-1 text-sm text-gray-600">{shop.description}</p>
+            )}
+            <p className="mt-1 text-sm text-gray-500">
+              {[shop.city, shop.phone].filter(Boolean).join(" · ")}
+            </p>
+          </div>
         </div>
       </header>
 
@@ -128,21 +142,35 @@ export default function PublicShopPage() {
         ) : (
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {visibleProducts.map((p) => (
-              <li key={p.id} className="rounded-lg bg-white p-4 shadow">
-                <p className="font-medium text-gray-900">{p.name}</p>
-                {p.description && (
-                  <p className="mt-1 line-clamp-2 text-sm text-gray-600">
-                    {p.description}
-                  </p>
+              <li key={p.id} className="overflow-hidden rounded-lg bg-white shadow">
+                {p.image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.image_url}
+                    alt={p.name}
+                    className="h-40 w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-40 w-full items-center justify-center bg-gray-100 text-sm text-gray-400">
+                    Pas de photo
+                  </div>
                 )}
-                <p className="mt-2 text-lg font-semibold text-gray-900">
-                  {formatFcfa(p.price)}
-                </p>
-                {!p.in_stock && (
-                  <p className="mt-1 text-sm font-medium text-red-600">
-                    Rupture de stock
+                <div className="p-4">
+                  <p className="font-medium text-gray-900">{p.name}</p>
+                  {p.description && (
+                    <p className="mt-1 line-clamp-2 text-sm text-gray-600">
+                      {p.description}
+                    </p>
+                  )}
+                  <p className="mt-2 text-lg font-semibold text-gray-900">
+                    {formatFcfa(p.price)}
                   </p>
-                )}
+                  {!p.in_stock && (
+                    <p className="mt-1 text-sm font-medium text-red-600">
+                      Rupture de stock
+                    </p>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

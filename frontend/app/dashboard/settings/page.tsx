@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "../../lib/api";
+import { uploadImage } from "../../lib/upload";
 import type { Shop } from "../../lib/types";
 
 export default function SettingsPage() {
@@ -14,8 +15,10 @@ export default function SettingsPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function fillForm(s: Shop) {
     setName(s.name);
@@ -32,7 +35,6 @@ export default function SettingsPage() {
         setShop(myShop);
         fillForm(myShop);
       } catch (err) {
-        // 404 = pas encore de boutique : on affiche le formulaire de création
         if (!(err instanceof ApiError && err.status === 404)) {
           setError("Impossible de charger votre boutique");
         }
@@ -50,8 +52,8 @@ export default function SettingsPage() {
     setIsSaving(true);
 
     const body = {
-      name,
-      phone,
+      name: name,
+      phone: phone,
       description: description || null,
       address: address || null,
       city: city || null,
@@ -62,12 +64,12 @@ export default function SettingsPage() {
         const updated = await api.patch<Shop>("/api/v1/shops/me", body);
         setShop(updated);
         fillForm(updated);
-        setSuccess("Boutique mise à jour");
+        setSuccess("Boutique mise a jour");
       } else {
         const created = await api.post<Shop>("/api/v1/shops", body);
         setShop(created);
         fillForm(created);
-        setSuccess("Boutique créée");
+        setSuccess("Boutique creee");
       }
     } catch (err) {
       if (err instanceof ApiError) {
@@ -77,6 +79,25 @@ export default function SettingsPage() {
       }
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files ? e.target.files[0] : null;
+    if (!file) return;
+    setError(null);
+    setIsUploadingLogo(true);
+
+    try {
+      const updated = await uploadImage<Shop>("/api/v1/shops/me/logo", file);
+      setShop(updated);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Erreur serveur");
+    } finally {
+      setIsUploadingLogo(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   }
 
@@ -91,23 +112,55 @@ export default function SettingsPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold text-gray-900">
-        {shop ? "Paramètres de la boutique" : "Créer ma boutique"}
+        {shop ? "Parametres de la boutique" : "Creer ma boutique"}
       </h1>
 
-      {shop && (
+      {shop ? (
         <div className="rounded-lg bg-white p-4 shadow">
           <p className="text-sm text-gray-600">Lien de votre boutique</p>
           <p className="font-mono text-sm text-gray-900">/shop/{shop.slug}</p>
           <p className="mt-1 text-xs text-gray-500">
-            Ce lien ne change pas, même si vous modifiez le nom.
+            Ce lien ne change pas, meme si vous modifiez le nom.
           </p>
         </div>
-      )}
+      ) : null}
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 rounded-lg bg-white p-6 shadow"
-      >
+      {shop ? (
+        <div className="rounded-lg bg-white p-6 shadow">
+          <p className={labelClass}>Logo de la boutique</p>
+          <div className="flex items-center gap-4">
+            {shop.logo_url ? (
+              <img
+                src={shop.logo_url}
+                alt="Logo de la boutique"
+                className="h-20 w-20 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-200 text-2xl font-semibold text-gray-500">
+                {shop.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <label className="inline-block cursor-pointer rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+                {isUploadingLogo ? "Envoi en cours..." : "Changer le logo"}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleLogoChange}
+                  disabled={isUploadingLogo}
+                  className="hidden"
+                />
+              </label>
+              <p className="mt-1 text-xs text-gray-500">
+                JPEG, PNG ou WebP, 5 Mo maximum
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg bg-white p-6 shadow">
         <div>
           <label className={labelClass}>Nom de la boutique</label>
           <input
@@ -119,8 +172,9 @@ export default function SettingsPage() {
             className={inputClass}
           />
         </div>
+
         <div>
-          <label className={labelClass}>Téléphone de la boutique</label>
+          <label className={labelClass}>Telephone de la boutique</label>
           <input
             type="tel"
             required
@@ -130,6 +184,7 @@ export default function SettingsPage() {
             className={inputClass}
           />
         </div>
+
         <div>
           <label className={labelClass}>Description (facultatif)</label>
           <textarea
@@ -139,6 +194,7 @@ export default function SettingsPage() {
             className={inputClass}
           />
         </div>
+
         <div>
           <label className={labelClass}>Adresse (facultatif)</label>
           <input
@@ -148,6 +204,7 @@ export default function SettingsPage() {
             className={inputClass}
           />
         </div>
+
         <div>
           <label className={labelClass}>Ville (facultatif)</label>
           <input
@@ -158,19 +215,15 @@ export default function SettingsPage() {
           />
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        {success && <p className="text-sm text-green-700">{success}</p>}
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {success ? <p className="text-sm text-green-700">{success}</p> : null}
 
         <button
           type="submit"
           disabled={isSaving}
           className="w-full rounded-md bg-gray-900 py-2 text-white transition hover:bg-gray-800 disabled:opacity-50"
         >
-          {isSaving
-            ? "Enregistrement..."
-            : shop
-              ? "Enregistrer les modifications"
-              : "Créer ma boutique"}
+          {isSaving ? "Enregistrement..." : shop ? "Enregistrer les modifications" : "Creer ma boutique"}
         </button>
       </form>
     </div>

@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60 * 24 * 7  # 7 jours
 
+    # Stockage des images ("local" en dev ; "r2" sera ajouté au déploiement)
+    storage_backend: str = "local"
+    media_dir: str = "/data/media"
+    public_media_url: str = "http://localhost:8000/media"
+    max_upload_mb: int = 5
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "../../lib/api";
+import { uploadImage } from "../../lib/upload";
 import type { Category, Product } from "../../lib/types";
 
 function formatFcfa(value: string | number): string {
@@ -13,7 +14,6 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
-  // Formulaire (création ou modification)
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
@@ -24,8 +24,10 @@ export default function ProductsPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingImageFor, setUploadingImageFor] = useState<string | null>(null);
   const [needsShop, setNeedsShop] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function loadAll() {
     try {
@@ -127,6 +129,26 @@ export default function ProductsPage() {
       await loadAll();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Erreur serveur");
+    }
+  }
+
+  async function handleImageChange(
+    productId: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    setUploadingImageFor(productId);
+
+    try {
+      await uploadImage<Product>(`/api/v1/products/${productId}/image`, file);
+      await loadAll();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Erreur serveur");
+    } finally {
+      setUploadingImageFor(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
@@ -252,6 +274,12 @@ export default function ProductsPage() {
             />
           </div>
 
+          {!editingId && (
+            <p className="text-xs text-gray-500">
+              Vous pourrez ajouter une photo juste après avoir créé le produit.
+            </p>
+          )}
+
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <div className="flex gap-2">
@@ -287,27 +315,44 @@ export default function ProductsPage() {
         <ul className="divide-y rounded-lg bg-white shadow">
           {products.map((p) => (
             <li key={p.id} className="space-y-2 p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="font-medium text-gray-900">{p.name}</p>
-                  <p className="text-sm text-gray-600">
-                    {formatFcfa(p.price)} · Stock : {p.stock}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {categoryName(p.category_id)}
-                  </p>
+              <div className="flex items-start gap-3">
+                {p.image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.image_url}
+                    alt={p.name}
+                    className="h-16 w-16 flex-shrink-0 rounded-md object-cover"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-md bg-gray-100 text-xs text-gray-400">
+                    Pas de photo
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-medium text-gray-900">{p.name}</p>
+                      <p className="text-sm text-gray-600">
+                        {formatFcfa(p.price)} · Stock : {p.stock}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {categoryName(p.category_id)}
+                      </p>
+                    </div>
+                    <span
+                      className={`whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium ${
+                        p.active
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-200 text-gray-700"
+                      }`}
+                    >
+                      {p.active ? "Actif" : "Masqué"}
+                    </span>
+                  </div>
                 </div>
-                <span
-                  className={`whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium ${
-                    p.active
-                      ? "bg-green-100 text-green-800"
-                      : "bg-gray-200 text-gray-700"
-                  }`}
-                >
-                  {p.active ? "Actif" : "Masqué"}
-                </span>
               </div>
-              <div className="flex flex-wrap gap-2">
+
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => startEdit(p)}
                   className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -326,6 +371,17 @@ export default function ProductsPage() {
                 >
                   Supprimer
                 </button>
+                <label className="cursor-pointer rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  {uploadingImageFor === p.id ? "Envoi..." : "Changer la photo"}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    disabled={uploadingImageFor === p.id}
+                    onChange={(e) => handleImageChange(p.id, e)}
+                  />
+                </label>
               </div>
             </li>
           ))}
