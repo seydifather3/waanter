@@ -36,7 +36,7 @@ export interface Product {
   category_id: string | null;
   name: string;
   description: string | null;
-  price: string; // le backend renvoie un décimal sous forme de texte
+  price: string;
   image_url: string | null;
   stock: number;
   active: boolean;
@@ -72,4 +72,28 @@ export interface PublicProduct {
 export interface PublicCatalog {
   categories: PublicCategory[];
   products: PublicProduct[];
+}
+
+export interface OrderItem {
+  id: string;
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  unit_price: string;
+  subtotal: string;
+}
+
+export interface Order {
+  id: string;
+  shop_id: string;
+  customer_id: string;
+  total: string;
+  status: string;
+  payment_status: string;
+  delivery_status: string;
+  delivery_method: "delivery" | "pickup";
+  delivery_address: string | null;
+  items: OrderItem[];
+  created_at: string;
+  updated_at: string;
 }

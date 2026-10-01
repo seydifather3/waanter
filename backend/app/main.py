@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.api.v1 import auth, shops, categories, products, public, uploads
+from app.api.v1 import auth, shops, categories, products, public, public_orders, uploads
 
 app = FastAPI(
     title="Waantér API",
@@ -30,9 +30,8 @@ app.include_router(categories.router, prefix="/api/v1")
 app.include_router(products.router, prefix="/api/v1")
 app.include_router(uploads.router, prefix="/api/v1")
 app.include_router(public.router, prefix="/api/v1")
+app.include_router(public_orders.router, prefix="/api/v1")
 
-# Sert les images en développement (stockage local).
-# En production, les images seront servies directement par Cloudflare R2.
 if settings.storage_backend == "local":
     os.makedirs(settings.media_dir, exist_ok=True)
     app.mount("/media", StaticFiles(directory=settings.media_dir), name="media")
@@ -40,12 +39,12 @@ if settings.storage_backend == "local":
 
 @app.get("/health")
 def health_check():
-    """Endpoint de vérification de santé du service."""
+    """Endpoint de verification de sante du service."""
     return {"status": "ok", "service": "waanter-api"}
 
 
 @app.get("/health/db")
 def health_check_db(db: Session = Depends(get_db)):
-    """Vérifie que l'API peut réellement se connecter à PostgreSQL."""
+    """Verifie que l'API peut reellement se connecter a PostgreSQL."""
     db.execute(text("SELECT 1"))
     return {"status": "ok", "database": "connected"}

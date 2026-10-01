@@ -1,17 +1,131 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { api, ApiError } from "../../../lib/api";
 import { useCart } from "../../../lib/cart";
+import type { Order } from "../../../lib/types";
 
-function formatFcfa(value: number): string {
-  return `${value.toLocaleString("fr-FR")} FCFA`;
+function formatFcfa(value: number | string): string {
+  return `${Number(value).toLocaleString("fr-FR")} FCFA`;
+}
+
+function buildWhatsAppLink(
+  shopPhone: string,
+  slug: string,
+  order: Order
+): string {
+  const baseUrl =
+    typeof window !== "undefined" ? window.location.origin : "";
+
+  const lines = order.items.flatMap((i) => [
+    `- ${i.product_name} x${i.quantity} : ${formatFcfa(i.subtotal)}`,
+    `  Voir le produit : ${baseUrl}/shop/${slug}?produit=${i.product_id}`,
+  ]);
+
+  const deliveryLine =
+    order.delivery_method === "delivery"
+      ? `Livraison a : ${order.delivery_address}`
+      : "Retrait en boutique";
+
+  const message = [
+    `Bonjour, je viens de passer une commande :`,
+    ...lines,
+    `Total : ${formatFcfa(order.total)}`,
+    deliveryLine,
+  ].join("\n");
+
+  const digitsOnly = shopPhone.replace(/[^0-9]/g, "");
+  return `https://wa.me/${digitsOnly}?text=${encodeURIComponent(message)}`;
 }
 
 export default function CartPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
   const cart = useCart();
+
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">(
+    "delivery"
+  );
+  const [address, setAddress] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [whatsappLink, setWhatsappLink] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    const body = {
+      customer_name: name,
+      customer_phone: phone,
+      delivery_method: deliveryMethod,
+      delivery_address: deliveryMethod === "delivery" ? address : null,
+      items: cart.items.map((i) => ({
+        product_id: i.productId,
+        quantity: i.quantity,
+      })),
+    };
+
+    try {
+      const order = await api.post<Order>(
+        `/api/v1/public/shops/${slug}/orders`,
+        body
+      );
+
+      const shop = await api.get<{ phone: string }>(
+        `/api/v1/public/shops/${slug}`
+      );
+      const link = buildWhatsAppLink(shop.phone, slug, order);
+
+      cart.clear();
+      setWhatsappLink(link);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Erreur serveur");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const inputClass =
+    "w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none";
+  const labelClass = "mb-1 block text-sm font-medium text-gray-700";
+
+  if (whatsappLink) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <main className="mx-auto max-w-3xl space-y-4 px-4 py-10 text-center">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Commande enregistree !
+          </h1>
+          <p className="text-gray-600">
+            Envoyez votre commande au vendeur sur WhatsApp pour la confirmer.
+          </p>
+          <a
+            href={whatsappLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block rounded-md bg-green-600 px-6 py-3 font-medium text-white hover:bg-green-700"
+          >
+            Envoyer sur WhatsApp
+          </a>
+          <div>
+            <Link
+              href={`/shop/${slug}`}
+              className="mt-4 inline-block text-sm text-gray-600 hover:underline"
+            >
+              Retour a la boutique
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -53,7 +167,6 @@ export default function CartPage() {
                     <button
                       onClick={() => cart.decrement(item.productId)}
                       className="h-8 w-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
-                      aria-label="Diminuer la quantite"
                     >
                       -
                     </button>
@@ -63,7 +176,6 @@ export default function CartPage() {
                     <button
                       onClick={() => cart.increment(item.productId)}
                       className="h-8 w-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
-                      aria-label="Augmenter la quantite"
                     >
                       +
                     </button>
@@ -85,13 +197,97 @@ export default function CartPage() {
               </div>
             </div>
 
-            <button
-              disabled
-              className="w-full rounded-md bg-gray-300 py-3 font-medium text-gray-600"
-              title="Disponible a la prochaine etape"
-            >
-              Passer la commande (bientot disponible)
-            </button>
+            {!showCheckout ? (
+              <button
+                onClick={() => setShowCheckout(true)}
+                className="w-full rounded-md bg-gray-900 py-3 font-medium text-white hover:bg-gray-800"
+              >
+                Passer la commande
+              </button>
+            ) : (
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-4 rounded-lg bg-white p-6 shadow"
+              >
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Vos informations
+                </h2>
+
+                <div>
+                  <label className={labelClass}>Votre nom</label>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Votre telephone</label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="+221 77 000 00 00"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Mode de reception</label>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod("delivery")}
+                      className={`flex-1 rounded-md border px-4 py-2 text-sm font-medium ${
+                        deliveryMethod === "delivery"
+                          ? "border-gray-900 bg-gray-900 text-white"
+                          : "border-gray-300 text-gray-700"
+                      }`}
+                    >
+                      Livraison
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod("pickup")}
+                      className={`flex-1 rounded-md border px-4 py-2 text-sm font-medium ${
+                        deliveryMethod === "pickup"
+                          ? "border-gray-900 bg-gray-900 text-white"
+                          : "border-gray-300 text-gray-700"
+                      }`}
+                    >
+                      Retrait en boutique
+                    </button>
+                  </div>
+                </div>
+
+                {deliveryMethod === "delivery" ? (
+                  <div>
+                    <label className={labelClass}>Adresse de livraison</label>
+                    <input
+                      type="text"
+                      required
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                ) : null}
+
+                {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full rounded-md bg-gray-900 py-3 font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {isSubmitting ? "Envoi..." : "Confirmer la commande"}
+                </button>
+              </form>
+            )}
           </>
         )}
       </main>

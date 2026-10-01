@@ -12,9 +12,9 @@
 - [x] Etape 8 - Categories
 - [x] Etape 9 - Products
 - [x] Etape 10 - Frontend Next.js
-- [ ] Etape 11 - Dashboard
-- [ ] Etape 12 - Boutique publique
-- [ ] Etape 13 - Panier
+- [x] Etape 11 - Dashboard
+- [x] Etape 12 - Boutique publique
+- [x] Etape 13 - Panier
 - [ ] Etape 14 - Commandes
 - [ ] Etape 15 - Tests
 - [ ] Etape 16 - Deploiement

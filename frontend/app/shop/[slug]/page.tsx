@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "../../lib/api";
 import { useCart } from "../../lib/cart";
@@ -14,6 +14,8 @@ function formatFcfa(value: string | number): string {
 export default function PublicShopPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
+  const searchParams = useSearchParams();
+  const highlightedProductId = searchParams.get("produit");
   const cart = useCart();
 
   const [shop, setShop] = useState<PublicShop | null>(null);
@@ -45,6 +47,15 @@ export default function PublicShopPage() {
     }
     load();
   }, [slug]);
+
+  // Si on arrive via un lien de produit, on defile jusqu'a lui une fois charge.
+  useEffect(() => {
+    if (!highlightedProductId || !catalog) return;
+    const el = document.getElementById(`produit-${highlightedProductId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightedProductId, catalog]);
 
   function handleAdd(id: string, name: string, price: string) {
     cart.addItem({ productId: id, name: name, price: Number(price) });
@@ -162,44 +173,53 @@ export default function PublicShopPage() {
           </p>
         ) : (
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {visibleProducts.map((p) => (
-              <li key={p.id} className="overflow-hidden rounded-lg bg-white shadow">
-                {p.image_url ? (
-                  <img
-                    src={p.image_url}
-                    alt={p.name}
-                    className="h-40 w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-40 w-full items-center justify-center bg-gray-100 text-sm text-gray-400">
-                    Pas de photo
-                  </div>
-                )}
-                <div className="p-4">
-                  <p className="font-medium text-gray-900">{p.name}</p>
-                  {p.description ? (
-                    <p className="mt-1 line-clamp-2 text-sm text-gray-600">
-                      {p.description}
-                    </p>
-                  ) : null}
-                  <p className="mt-2 text-lg font-semibold text-gray-900">
-                    {formatFcfa(p.price)}
-                  </p>
-                  {!p.in_stock ? (
-                    <p className="mt-1 text-sm font-medium text-red-600">
-                      Rupture de stock
-                    </p>
+            {visibleProducts.map((p) => {
+              const isHighlighted = p.id === highlightedProductId;
+              return (
+                <li
+                  key={p.id}
+                  id={`produit-${p.id}`}
+                  className={`overflow-hidden rounded-lg bg-white shadow ${
+                    isHighlighted ? "ring-2 ring-gray-900" : ""
+                  }`}
+                >
+                  {p.image_url ? (
+                    <img
+                      src={p.image_url}
+                      alt={p.name}
+                      className="h-40 w-full object-cover"
+                    />
                   ) : (
-                    <button
-                      onClick={() => handleAdd(p.id, p.name, p.price)}
-                      className="mt-3 w-full rounded-md bg-gray-900 py-2 text-sm font-medium text-white hover:bg-gray-800"
-                    >
-                      {addedId === p.id ? "Ajoute !" : "Ajouter au panier"}
-                    </button>
+                    <div className="flex h-40 w-full items-center justify-center bg-gray-100 text-sm text-gray-400">
+                      Pas de photo
+                    </div>
                   )}
-                </div>
-              </li>
-            ))}
+                  <div className="p-4">
+                    <p className="font-medium text-gray-900">{p.name}</p>
+                    {p.description ? (
+                      <p className="mt-1 line-clamp-2 text-sm text-gray-600">
+                        {p.description}
+                      </p>
+                    ) : null}
+                    <p className="mt-2 text-lg font-semibold text-gray-900">
+                      {formatFcfa(p.price)}
+                    </p>
+                    {!p.in_stock ? (
+                      <p className="mt-1 text-sm font-medium text-red-600">
+                        Rupture de stock
+                      </p>
+                    ) : (
+                      <button
+                        onClick={() => handleAdd(p.id, p.name, p.price)}
+                        className="mt-3 w-full rounded-md bg-gray-900 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                      >
+                        {addedId === p.id ? "Ajoute !" : "Ajouter au panier"}
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </main>
