@@ -15,7 +15,7 @@
 - [x] Etape 11 - Dashboard
 - [x] Etape 12 - Boutique publique
 - [x] Etape 13 - Panier
-- [ ] Etape 14 - Commandes
+- [x] Etape 14 - Commandes
 - [ ] Etape 15 - Tests
 - [ ] Etape 16 - Deploiement
 - [ ] Etape 17 - Premier commercant pilote
