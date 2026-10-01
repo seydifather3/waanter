@@ -8,7 +8,17 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.api.v1 import auth, shops, categories, products, public, public_orders, uploads
+from app.api.v1 import (
+    auth,
+    shops,
+    categories,
+    products,
+    public,
+    public_orders,
+    orders,
+    customers,
+    uploads,
+)
 
 app = FastAPI(
     title="Waantér API",
@@ -28,6 +38,8 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(shops.router, prefix="/api/v1")
 app.include_router(categories.router, prefix="/api/v1")
 app.include_router(products.router, prefix="/api/v1")
+app.include_router(orders.router, prefix="/api/v1")
+app.include_router(customers.router, prefix="/api/v1")
 app.include_router(uploads.router, prefix="/api/v1")
 app.include_router(public.router, prefix="/api/v1")
 app.include_router(public_orders.router, prefix="/api/v1")

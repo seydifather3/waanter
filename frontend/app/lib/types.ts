@@ -97,3 +97,13 @@ export interface Order {
   created_at: string;
   updated_at: string;
 }
+
+export interface Customer {
+  id: string;
+  shop_id: string;
+  name: string;
+  phone: string;
+  address: string | null;
+  created_at: string;
+  updated_at: string;
+}
