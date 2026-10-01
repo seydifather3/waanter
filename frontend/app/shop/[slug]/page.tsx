@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { api, ApiError } from "../../lib/api";
+import { useCart } from "../../lib/cart";
 import type { PublicCatalog, PublicShop } from "../../lib/types";
 
 function formatFcfa(value: string | number): string {
@@ -12,6 +14,7 @@ function formatFcfa(value: string | number): string {
 export default function PublicShopPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
+  const cart = useCart();
 
   const [shop, setShop] = useState<PublicShop | null>(null);
   const [catalog, setCatalog] = useState<PublicCatalog | null>(null);
@@ -19,6 +22,7 @@ export default function PublicShopPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [addedId, setAddedId] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -42,6 +46,12 @@ export default function PublicShopPage() {
     load();
   }, [slug]);
 
+  function handleAdd(id: string, name: string, price: string) {
+    cart.addItem({ productId: id, name: name, price: Number(price) });
+    setAddedId(id);
+    setTimeout(() => setAddedId(null), 1200);
+  }
+
   if (isLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -57,7 +67,7 @@ export default function PublicShopPage() {
           Boutique introuvable
         </h1>
         <p className="mt-2 text-gray-600">
-          Ce lien n&apos;est pas valide. Vérifiez l&apos;adresse de la boutique.
+          Ce lien n&apos;est pas valide. Verifiez l&apos;adresse de la boutique.
         </p>
       </main>
     );
@@ -79,11 +89,10 @@ export default function PublicShopPage() {
     "whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium";
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <header className="bg-white shadow-sm">
         <div className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-6">
           {shop.logo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={shop.logo_url}
               alt={shop.name}
@@ -94,20 +103,32 @@ export default function PublicShopPage() {
               {shop.name.charAt(0).toUpperCase()}
             </div>
           )}
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="text-2xl font-bold text-gray-900">{shop.name}</h1>
-            {shop.description && (
+            {shop.description ? (
               <p className="mt-1 text-sm text-gray-600">{shop.description}</p>
-            )}
+            ) : null}
             <p className="mt-1 text-sm text-gray-500">
-              {[shop.city, shop.phone].filter(Boolean).join(" · ")}
+              {[shop.city, shop.phone].filter(Boolean).join(" - ")}
             </p>
           </div>
+          <Link
+            href={`/shop/${slug}/panier`}
+            className="relative flex-shrink-0 rounded-full bg-gray-900 p-3 text-white"
+            aria-label="Voir le panier"
+          >
+            Panier
+            {cart.totalItems > 0 ? (
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold">
+                {cart.totalItems}
+              </span>
+            ) : null}
+          </Link>
         </div>
       </header>
 
       <main className="mx-auto max-w-3xl space-y-4 px-4 py-4">
-        {catalog.categories.length > 0 && (
+        {catalog.categories.length > 0 ? (
           <nav className="flex gap-2 overflow-x-auto pb-1">
             <button
               onClick={() => setSelectedCategory(null)}
@@ -133,7 +154,7 @@ export default function PublicShopPage() {
               </button>
             ))}
           </nav>
-        )}
+        ) : null}
 
         {visibleProducts.length === 0 ? (
           <p className="rounded-lg bg-white p-6 text-sm text-gray-600 shadow">
@@ -144,7 +165,6 @@ export default function PublicShopPage() {
             {visibleProducts.map((p) => (
               <li key={p.id} className="overflow-hidden rounded-lg bg-white shadow">
                 {p.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={p.image_url}
                     alt={p.name}
@@ -157,18 +177,25 @@ export default function PublicShopPage() {
                 )}
                 <div className="p-4">
                   <p className="font-medium text-gray-900">{p.name}</p>
-                  {p.description && (
+                  {p.description ? (
                     <p className="mt-1 line-clamp-2 text-sm text-gray-600">
                       {p.description}
                     </p>
-                  )}
+                  ) : null}
                   <p className="mt-2 text-lg font-semibold text-gray-900">
                     {formatFcfa(p.price)}
                   </p>
-                  {!p.in_stock && (
+                  {!p.in_stock ? (
                     <p className="mt-1 text-sm font-medium text-red-600">
                       Rupture de stock
                     </p>
+                  ) : (
+                    <button
+                      onClick={() => handleAdd(p.id, p.name, p.price)}
+                      className="mt-3 w-full rounded-md bg-gray-900 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                    >
+                      {addedId === p.id ? "Ajoute !" : "Ajouter au panier"}
+                    </button>
                   )}
                 </div>
               </li>
