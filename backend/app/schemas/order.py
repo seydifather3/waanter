@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, model_validator
 
 
 class OrderItemCreate(BaseModel):
@@ -18,13 +18,11 @@ class OrderCreate(BaseModel):
     delivery_address: str | None = None
     items: list[OrderItemCreate] = Field(min_length=1)
 
-    @field_validator("delivery_address")
-    @classmethod
-    def address_required_if_delivery(cls, v, info):
-        delivery_method = info.data.get("delivery_method")
-        if delivery_method == "delivery" and not v:
+    @model_validator(mode="after")
+    def address_required_if_delivery(self) -> "OrderCreate":
+        if self.delivery_method == "delivery" and not self.delivery_address:
             raise ValueError("L'adresse est obligatoire pour une livraison")
-        return v
+        return self
 
 
 class OrderItemRead(BaseModel):

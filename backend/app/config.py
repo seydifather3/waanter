@@ -3,17 +3,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     """
-    Configuration centralisée de l'application, lue depuis les
+    Configuration centralisee de l'application, lue depuis les
     variables d'environnement.
     """
 
     database_url: str
+    test_database_url: str | None = None
 
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60 * 24 * 7  # 7 jours
 
-    # Stockage des images ("local" en dev ; "r2" sera ajouté au déploiement)
     storage_backend: str = "local"
     media_dir: str = "/data/media"
     public_media_url: str = "http://localhost:8000/media"
