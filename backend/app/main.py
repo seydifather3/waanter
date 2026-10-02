@@ -17,6 +17,7 @@ from app.api.v1 import (
     public_orders,
     orders,
     customers,
+    stats,
     uploads,
 )
 
@@ -40,6 +41,7 @@ app.include_router(categories.router, prefix="/api/v1")
 app.include_router(products.router, prefix="/api/v1")
 app.include_router(orders.router, prefix="/api/v1")
 app.include_router(customers.router, prefix="/api/v1")
+app.include_router(stats.router, prefix="/api/v1")
 app.include_router(uploads.router, prefix="/api/v1")
 app.include_router(public.router, prefix="/api/v1")
 app.include_router(public_orders.router, prefix="/api/v1")

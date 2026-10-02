@@ -107,3 +107,10 @@ export interface Customer {
   created_at: string;
   updated_at: string;
 }
+
+export interface ShopStats {
+  total_orders: number;
+  total_sales: string;
+  total_products: number;
+  recent_orders: Order[];
+}
