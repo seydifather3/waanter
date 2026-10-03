@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "../lib/api";
 import { clearToken } from "../lib/auth";
+import { shareOrCopy } from "../lib/share";
 import type { Shop, ShopStats, User } from "../lib/types";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -28,6 +29,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<ShopStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -61,6 +63,16 @@ export default function DashboardPage() {
     load();
   }, [router]);
 
+  async function handleShare() {
+    if (!shop) return;
+    const url = `${window.location.origin}/shop/${shop.slug}`;
+    const result = await shareOrCopy(url, shop.name);
+    setShareMessage(result === "copied" ? "Lien copie !" : null);
+    if (result === "copied") {
+      setTimeout(() => setShareMessage(null), 2000);
+    }
+  }
+
   if (isLoading) {
     return <p className="text-gray-600">Chargement...</p>;
   }
@@ -89,7 +101,7 @@ export default function DashboardPage() {
                 {shop.name.charAt(0).toUpperCase()}
               </div>
             )}
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <h2 className="text-lg font-semibold text-gray-900">
                 {shop.name}
               </h2>
@@ -101,12 +113,23 @@ export default function DashboardPage() {
                   Ville : {shop.city}
                 </p>
               ) : null}
-              <Link
-                href="/dashboard/settings"
-                className="mt-2 inline-block text-sm font-medium text-blue-700 hover:underline"
-              >
-                Modifier ma boutique
-              </Link>
+              <div className="mt-2 flex items-center gap-3">
+                <Link
+                  href="/dashboard/settings"
+                  className="text-sm font-medium text-blue-700 hover:underline"
+                >
+                  Modifier ma boutique
+                </Link>
+                <button
+                  onClick={handleShare}
+                  className="rounded-md bg-green-600 px-3 py-1 text-sm font-medium text-white hover:bg-green-700"
+                >
+                  Partager
+                </button>
+                {shareMessage ? (
+                  <span className="text-sm text-gray-600">{shareMessage}</span>
+                ) : null}
+              </div>
             </div>
           </div>
 

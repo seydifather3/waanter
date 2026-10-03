@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "../../lib/api";
 import { uploadImage } from "../../lib/upload";
+import { shareOrCopy } from "../../lib/share";
 import type { Shop } from "../../lib/types";
 
 export default function SettingsPage() {
@@ -18,6 +19,7 @@ export default function SettingsPage() {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function fillForm(s: Shop) {
@@ -101,6 +103,16 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleShare() {
+    if (!shop) return;
+    const url = `${window.location.origin}/shop/${shop.slug}`;
+    const result = await shareOrCopy(url, shop.name);
+    setShareMessage(result === "copied" ? "Lien copie !" : null);
+    if (result === "copied") {
+      setTimeout(() => setShareMessage(null), 2000);
+    }
+  }
+
   if (isLoading) {
     return <p className="text-gray-600">Chargement...</p>;
   }
@@ -122,6 +134,15 @@ export default function SettingsPage() {
           <p className="mt-1 text-xs text-gray-500">
             Ce lien ne change pas, meme si vous modifiez le nom.
           </p>
+          <button
+            onClick={handleShare}
+            className="mt-3 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+          >
+            Partager ma boutique
+          </button>
+          {shareMessage ? (
+            <span className="ml-3 text-sm text-gray-600">{shareMessage}</span>
+          ) : null}
         </div>
       ) : null}
 
