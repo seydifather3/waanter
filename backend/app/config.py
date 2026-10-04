@@ -19,11 +19,19 @@ class Settings(BaseSettings):
     public_media_url: str = "http://localhost:8000/media"
     max_upload_mb: int = 5
 
+    # Liste des origines autorisees a contacter l'API, separees par des virgules.
+    # En developpement, seul localhost:3000 est autorise par defaut.
+    allowed_origins: str = "http://localhost:3000"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @property
+    def allowed_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
 
 
 settings = Settings()
