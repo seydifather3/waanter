@@ -93,7 +93,7 @@ export default function CartPage() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none";
+    "w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-teal-600 focus:outline-none";
   const labelClass = "mb-1 block text-sm font-medium text-gray-700";
 
   if (whatsappLink) {
@@ -147,7 +147,7 @@ export default function CartPage() {
             <p className="text-gray-600">Votre panier est vide.</p>
             <Link
               href={`/shop/${slug}`}
-              className="mt-3 inline-block rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-800"
+              className="mt-3 inline-block rounded-md bg-teal-700 px-4 py-2 text-sm text-white hover:bg-teal-800"
             >
               Voir les produits
             </Link>
@@ -166,7 +166,7 @@ export default function CartPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => cart.decrement(item.productId)}
-                      className="h-8 w-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                      className="h-8 w-8 rounded-md border border-gray-300 text-gray-700 hover:border-teal-600"
                     >
                       -
                     </button>
@@ -175,7 +175,7 @@ export default function CartPage() {
                     </span>
                     <button
                       onClick={() => cart.increment(item.productId)}
-                      className="h-8 w-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                      className="h-8 w-8 rounded-md border border-gray-300 text-gray-700 hover:border-teal-600"
                     >
                       +
                     </button>
@@ -200,7 +200,7 @@ export default function CartPage() {
             {!showCheckout ? (
               <button
                 onClick={() => setShowCheckout(true)}
-                className="w-full rounded-md bg-gray-900 py-3 font-medium text-white hover:bg-gray-800"
+                className="w-full rounded-md bg-teal-700 py-3 font-medium text-white hover:bg-teal-800"
               >
                 Passer la commande
               </button>
@@ -244,7 +244,7 @@ export default function CartPage() {
                       onClick={() => setDeliveryMethod("delivery")}
                       className={`flex-1 rounded-md border px-4 py-2 text-sm font-medium ${
                         deliveryMethod === "delivery"
-                          ? "border-gray-900 bg-gray-900 text-white"
+                          ? "border-teal-700 bg-teal-700 text-white"
                           : "border-gray-300 text-gray-700"
                       }`}
                     >
@@ -255,7 +255,7 @@ export default function CartPage() {
                       onClick={() => setDeliveryMethod("pickup")}
                       className={`flex-1 rounded-md border px-4 py-2 text-sm font-medium ${
                         deliveryMethod === "pickup"
-                          ? "border-gray-900 bg-gray-900 text-white"
+                          ? "border-teal-700 bg-teal-700 text-white"
                           : "border-gray-300 text-gray-700"
                       }`}
                     >
@@ -282,7 +282,7 @@ export default function CartPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full rounded-md bg-gray-900 py-3 font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+                  className="w-full rounded-md bg-teal-700 py-3 font-medium text-white hover:bg-teal-800 disabled:opacity-50"
                 >
                   {isSubmitting ? "Envoi..." : "Confirmer la commande"}
                 </button>

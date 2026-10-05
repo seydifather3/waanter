@@ -14,17 +14,13 @@ function formatFcfa(value: string | number): string {
 export default function PublicShopPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
-
   const searchParams = useSearchParams();
   const highlightedProductId = searchParams.get("produit");
-
   const cart = useCart();
 
   const [shop, setShop] = useState<PublicShop | null>(null);
   const [catalog, setCatalog] = useState<PublicCatalog | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(
-    null
-  );
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,17 +29,10 @@ export default function PublicShopPage() {
   useEffect(() => {
     async function load() {
       try {
-        setIsLoading(true);
-        setError(null);
-        setNotFound(false);
-
         const [shopData, catalogData] = await Promise.all([
           api.get<PublicShop>(`/api/v1/public/shops/${slug}`),
-          api.get<PublicCatalog>(
-            `/api/v1/public/shops/${slug}/products`
-          ),
+          api.get<PublicCatalog>(`/api/v1/public/shops/${slug}/products`),
         ]);
-
         setShop(shopData);
         setCatalog(catalogData);
       } catch (err) {
@@ -56,343 +45,174 @@ export default function PublicShopPage() {
         setIsLoading(false);
       }
     }
-
-    if (slug) {
-      load();
-    }
+    load();
   }, [slug]);
 
   useEffect(() => {
-    if (!highlightedProductId || !catalog) {
-      return;
-    }
-
-    const element = document.getElementById(
-      `produit-${highlightedProductId}`
-    );
-
-    if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
+    if (!highlightedProductId || !catalog) return;
+    const el = document.getElementById(`produit-${highlightedProductId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [highlightedProductId, catalog]);
 
-  function handleAdd(
-    id: string,
-    name: string,
-    price: string | number
-  ) {
-    cart.addItem({
-      productId: id,
-      name,
-      price: Number(price),
-    });
-
+  function handleAdd(id: string, name: string, price: string) {
+    cart.addItem({ productId: id, name: name, price: Number(price) });
     setAddedId(id);
-
-    setTimeout(() => {
-      setAddedId(null);
-    }, 1200);
+    setTimeout(() => setAddedId(null), 1200);
   }
 
   if (isLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
-
-          <p className="text-sm text-slate-500">
-            Chargement de la boutique...
-          </p>
-        </div>
+      <main className="flex min-h-screen items-center justify-center bg-gray-50">
+        <p className="text-gray-600">Chargement...</p>
       </main>
     );
   }
 
   if (notFound) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 text-center">
-        <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-xl">
-            🏪
-          </div>
-
-          <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900">
-            Boutique introuvable
-          </h1>
-
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Ce lien n&apos;est pas valide. Vérifiez l&apos;adresse de la
-            boutique.
-          </p>
-        </div>
+      <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-6 text-center">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Boutique introuvable
+        </h1>
+        <p className="mt-2 text-gray-600">
+          Ce lien n&apos;est pas valide. Verifiez l&apos;adresse de la boutique.
+        </p>
       </main>
     );
   }
 
   if (error || !shop || !catalog) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 text-center">
-        <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
-            !
-          </div>
-
-          <h1 className="mt-5 text-xl font-bold text-slate-900">
-            Une erreur est survenue
-          </h1>
-
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            {error ?? "Impossible de charger la boutique."}
-          </p>
-        </div>
+      <main className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
+        <p className="text-red-600">{error ?? "Une erreur est survenue"}</p>
       </main>
     );
   }
 
   const visibleProducts = selectedCategory
-    ? catalog.products.filter(
-        (product) => product.category_id === selectedCategory
-      )
+    ? catalog.products.filter((p) => p.category_id === selectedCategory)
     : catalog.products;
 
   const chipBase =
-    "whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition";
+    "whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium";
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
-      {/* Header */}
-
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="flex min-h-[76px] items-center gap-3 sm:gap-4">
-            {/* Logo */}
-
-            {shop.logo_url ? (
-              <img
-                src={shop.logo_url}
-                alt={shop.name}
-                className="h-12 w-12 flex-shrink-0 rounded-xl object-cover ring-1 ring-slate-200 sm:h-14 sm:w-14"
-              />
-            ) : (
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-slate-900 text-lg font-bold text-white sm:h-14 sm:w-14">
-                {shop.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-
-            {/* Informations boutique */}
-
-            <div className="min-w-0 flex-1">
-              <h1 className="truncate text-base font-bold text-slate-900 sm:text-lg">
-                {shop.name}
-              </h1>
-
-              {shop.description ? (
-                <p className="mt-0.5 hidden truncate text-sm text-slate-500 sm:block">
-                  {shop.description}
-                </p>
-              ) : null}
-
-              {shop.city || shop.phone ? (
-                <p className="mt-0.5 truncate text-xs text-slate-400">
-                  {[shop.city, shop.phone]
-                    .filter(Boolean)
-                    .join(" • ")}
-                </p>
-              ) : null}
+    <div className="min-h-screen bg-gray-50 pb-24">
+      <header className="bg-white shadow-sm">
+        <div className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-6">
+          {shop.logo_url ? (
+            <img
+              src={shop.logo_url}
+              alt={shop.name}
+              className="h-16 w-16 flex-shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-teal-100 text-xl font-semibold text-teal-700">
+              {shop.name.charAt(0).toUpperCase()}
             </div>
-
-            {/* Panier */}
-
-            <Link
-              href={`/shop/${slug}/panier`}
-              aria-label="Voir le panier"
-              className="relative flex h-10 flex-shrink-0 items-center gap-2 rounded-xl bg-slate-900 px-3 text-sm font-semibold text-white transition hover:bg-slate-800 active:scale-95 sm:h-11 sm:px-4"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                className="h-5 w-5"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 4h2l1.5 11h10L18 8H6"
-                />
-
-                <circle cx="9" cy="19" r="1" />
-                <circle cx="16" cy="19" r="1" />
-              </svg>
-
-              <span className="hidden sm:inline">
-                Panier
-              </span>
-
-              {cart.totalItems > 0 ? (
-                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white ring-2 ring-white">
-                  {cart.totalItems}
-                </span>
-              ) : null}
-            </Link>
+          )}
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl font-bold text-gray-900">{shop.name}</h1>
+            {shop.description ? (
+              <p className="mt-1 text-sm text-gray-600">{shop.description}</p>
+            ) : null}
+            <p className="mt-1 text-sm text-gray-500">
+              {[shop.city, shop.phone].filter(Boolean).join(" - ")}
+            </p>
           </div>
+          <Link
+            href={`/shop/${slug}/panier`}
+            className="relative flex-shrink-0 rounded-full bg-teal-700 p-3 text-white"
+            aria-label="Voir le panier"
+          >
+            Panier
+            {cart.totalItems > 0 ? (
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold">
+                {cart.totalItems}
+              </span>
+            ) : null}
+          </Link>
         </div>
       </header>
 
-      {/* Contenu principal */}
-
-      <main className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-7">
-        {/* Catégories */}
-
+      <main className="mx-auto max-w-3xl space-y-4 px-4 py-4">
         {catalog.categories.length > 0 ? (
-          <nav className="-mx-4 mb-6 overflow-x-auto px-4 sm:-mx-6 sm:px-6">
-            <div className="flex w-max gap-2">
+          <nav className="flex gap-2 overflow-x-auto pb-1">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`${chipBase} ${
+                selectedCategory === null
+                  ? "bg-teal-700 text-white"
+                  : "bg-white text-gray-700 shadow-sm"
+              }`}
+            >
+              Tout
+            </button>
+            {catalog.categories.map((c) => (
               <button
-                type="button"
-                onClick={() => setSelectedCategory(null)}
+                key={c.id}
+                onClick={() => setSelectedCategory(c.id)}
                 className={`${chipBase} ${
-                  selectedCategory === null
-                    ? "bg-slate-900 text-white shadow-sm"
-                    : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100"
+                  selectedCategory === c.id
+                    ? "bg-teal-700 text-white"
+                    : "bg-white text-gray-700 shadow-sm"
                 }`}
               >
-                Tout
+                {c.name}
               </button>
-
-              {catalog.categories.map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  onClick={() =>
-                    setSelectedCategory(category.id)
-                  }
-                  className={`${chipBase} ${
-                    selectedCategory === category.id
-                      ? "bg-slate-900 text-white shadow-sm"
-                      : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100"
-                  }`}
-                >
-                  {category.name}
-                </button>
-              ))}
-            </div>
+            ))}
           </nav>
         ) : null}
 
-        {/* Titre */}
-
-        <div className="mb-4">
-          <h2 className="text-xl font-bold tracking-tight text-slate-900">
-            Produits
-          </h2>
-
-          <p className="mt-1 text-sm text-slate-500">
-            {visibleProducts.length}{" "}
-            {visibleProducts.length > 1
-              ? "produits disponibles"
-              : "produit disponible"}
-          </p>
-        </div>
-
-        {/* Produits */}
-
         {visibleProducts.length === 0 ? (
-          <div className="rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-              📦
-            </div>
-
-            <p className="mt-4 text-sm font-medium text-slate-700">
-              Aucun produit disponible pour le moment.
-            </p>
-          </div>
+          <p className="rounded-lg bg-white p-6 text-sm text-gray-600 shadow">
+            Aucun produit disponible pour le moment.
+          </p>
         ) : (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-            {visibleProducts.map((product) => {
-              const isHighlighted =
-                product.id === highlightedProductId;
-
-              const isAdded = addedId === product.id;
-
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {visibleProducts.map((p) => {
+              const isHighlighted = p.id === highlightedProductId;
               return (
                 <li
-                  key={product.id}
-                  id={`produit-${product.id}`}
-                  className={`group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-md sm:rounded-3xl ${
-                    isHighlighted
-                      ? "ring-2 ring-slate-900 ring-offset-2"
-                      : ""
+                  key={p.id}
+                  id={`produit-${p.id}`}
+                  className={`overflow-hidden rounded-lg bg-white shadow ${
+                    isHighlighted ? "ring-2 ring-teal-600" : ""
                   }`}
                 >
-                  {/* Image */}
-
-                  <div className="relative aspect-square overflow-hidden bg-slate-100">
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        loading="lazy"
-                        className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.03]"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-sm text-slate-400">
-                        Pas de photo
-                      </div>
-                    )}
-
-                    {!product.in_stock ? (
-                      <span className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-red-600 shadow-sm">
-                        Rupture
-                      </span>
+                  {p.image_url ? (
+                    <img
+                      src={p.image_url}
+                      alt={p.name}
+                      className="aspect-square w-full bg-gray-50 object-contain"
+                    />
+                  ) : (
+                    <div className="flex aspect-square w-full items-center justify-center bg-gray-100 text-sm text-gray-400">
+                      Pas de photo
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <p className="font-medium text-gray-900">{p.name}</p>
+                    {p.description ? (
+                      <p className="mt-1 line-clamp-2 text-sm text-gray-600">
+                        {p.description}
+                      </p>
                     ) : null}
-                  </div>
-
-                  {/* Informations produit */}
-
-                  <div className="p-3.5 sm:p-4">
-                    <h3 className="line-clamp-2 min-h-[40px] text-sm font-semibold leading-5 text-slate-900 sm:text-base">
-                      {product.name}
-                    </h3>
-
-                    {product.description ? (
-                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500 sm:text-sm">
-                        {product.description}
+                    <p className="mt-2 text-lg font-semibold text-gray-900">
+                      {formatFcfa(p.price)}
+                    </p>
+                    {!p.in_stock ? (
+                      <p className="mt-1 text-sm font-medium text-red-600">
+                        Rupture de stock
                       </p>
                     ) : (
-                      <div className="h-5" />
-                    )}
-
-                    <p className="mt-3 text-base font-bold text-slate-900 sm:text-lg">
-                      {formatFcfa(product.price)}
-                    </p>
-
-                    {!product.in_stock ? (
-                      <div className="mt-3 flex h-10 items-center justify-center rounded-xl bg-slate-100 text-xs font-medium text-slate-400 sm:h-11 sm:text-sm">
-                        Rupture de stock
-                      </div>
-                    ) : (
                       <button
-                        type="button"
-                        onClick={() =>
-                          handleAdd(
-                            product.id,
-                            product.name,
-                            product.price
-                          )
-                        }
-                        className={`mt-3 h-10 w-full rounded-xl text-xs font-semibold transition active:scale-[0.98] sm:h-11 sm:text-sm ${
-                          isAdded
-                            ? "bg-emerald-500 text-white"
-                            : "bg-slate-900 text-white hover:bg-slate-800"
-                        }`}
+                        onClick={() => handleAdd(p.id, p.name, p.price)}
+                        className="mt-3 w-full rounded-md bg-teal-700 py-2 text-sm font-medium text-white hover:bg-teal-800"
                       >
-                        {isAdded
-                          ? "✓ Ajouté"
-                          : "Ajouter au panier"}
+                        {addedId === p.id ? "Ajoute !" : "Ajouter au panier"}
                       </button>
                     )}
                   </div>
@@ -402,34 +222,6 @@ export default function PublicShopPage() {
           </ul>
         )}
       </main>
-
-      {/* Panier mobile */}
-
-      {cart.totalItems > 0 ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 shadow-[0_-6px_20px_rgba(0,0,0,0.06)] backdrop-blur sm:hidden">
-          <div className="mx-auto flex max-w-lg items-center gap-3">
-            <div className="flex-1">
-              <p className="text-xs text-slate-500">
-                Votre panier
-              </p>
-
-              <p className="text-sm font-bold text-slate-900">
-                {cart.totalItems}{" "}
-                {cart.totalItems > 1
-                  ? "articles"
-                  : "article"}
-              </p>
-            </div>
-
-            <Link
-              href={`/shop/${slug}/panier`}
-              className="flex h-11 items-center justify-center rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 active:scale-95"
-            >
-              Voir le panier
-            </Link>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
