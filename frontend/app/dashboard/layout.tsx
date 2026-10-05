@@ -2,16 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { clearToken, isAuthenticated } from "../lib/auth";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Accueil" },
   { href: "/dashboard/products", label: "Produits" },
-  { href: "/dashboard/categories", label: "Catégories" },
+  { href: "/dashboard/categories", label: "Categories" },
   { href: "/dashboard/orders", label: "Commandes" },
   { href: "/dashboard/customers", label: "Clients" },
-  { href: "/dashboard/settings", label: "Paramètres" },
+  { href: "/dashboard/settings", label: "Parametres" },
 ];
 
 export default function DashboardLayout({
@@ -44,12 +45,19 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-gray-50">
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <span className="text-lg font-bold text-gray-900">Waantér</span>
+          <Image
+            src="/logo.png"
+            alt="Waantér"
+            width={140}
+            height={45}
+            priority
+            className="h-auto w-32"
+          />
           <button
             onClick={handleLogout}
-            className="rounded-md border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-100"
+            className="rounded-md border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:border-teal-600 hover:text-teal-700"
           >
-            Déconnexion
+            Deconnexion
           </button>
         </div>
         <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 pb-2">
@@ -64,8 +72,8 @@ export default function DashboardLayout({
                 href={item.href}
                 className={`whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ${
                   isActive
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-600 hover:bg-gray-100"
+                    ? "bg-teal-700 text-white"
+                    : "text-gray-600 hover:bg-teal-50 hover:text-teal-700"
                 }`}
               >
                 {item.label}
