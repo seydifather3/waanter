@@ -136,7 +136,7 @@ export default function ProductsPage() {
     productId: string,
     e: React.ChangeEvent<HTMLInputElement>
   ) {
-    const file = e.target.files?.[0];
+    const file = e.target.files ? e.target.files[0] : null;
     if (!file) return;
     setError(null);
     setUploadingImageFor(productId);
@@ -148,13 +148,15 @@ export default function ProductsPage() {
       setError(err instanceof ApiError ? err.message : "Erreur serveur");
     } finally {
       setUploadingImageFor(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   }
 
   function categoryName(id: string | null): string {
-    if (!id) return "Sans catégorie";
-    return categories.find((c) => c.id === id)?.name ?? "Sans catégorie";
+    if (!id) return "Sans categorie";
+    return categories.find((c) => c.id === id)?.name ?? "Sans categorie";
   }
 
   if (isLoading) {
@@ -165,23 +167,23 @@ export default function ProductsPage() {
     return (
       <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6">
         <h1 className="text-lg font-semibold text-gray-900">
-          Créez d&apos;abord votre boutique
+          Creez d&apos;abord votre boutique
         </h1>
         <p className="mt-1 text-sm text-gray-600">
           Il faut une boutique avant d&apos;ajouter des produits.
         </p>
         <Link
           href="/dashboard/settings"
-          className="mt-3 inline-block rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-800"
+          className="mt-3 inline-block rounded-md bg-teal-700 px-4 py-2 text-sm text-white hover:bg-teal-800"
         >
-          Créer ma boutique
+          Creer ma boutique
         </Link>
       </div>
     );
   }
 
   const inputClass =
-    "w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none";
+    "w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-teal-600 focus:outline-none";
   const labelClass = "mb-1 block text-sm font-medium text-gray-700";
 
   return (
@@ -191,7 +193,7 @@ export default function ProductsPage() {
         {!showForm && (
           <button
             onClick={startCreate}
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-800"
+            className="rounded-md bg-teal-700 px-4 py-2 text-sm text-white hover:bg-teal-800"
           >
             Ajouter un produit
           </button>
@@ -249,13 +251,13 @@ export default function ProductsPage() {
           </div>
 
           <div>
-            <label className={labelClass}>Catégorie (facultatif)</label>
+            <label className={labelClass}>Categorie (facultatif)</label>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
               className={inputClass}
             >
-              <option value="">Sans catégorie</option>
+              <option value="">Sans categorie</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -276,17 +278,17 @@ export default function ProductsPage() {
 
           {!editingId && (
             <p className="text-xs text-gray-500">
-              Vous pourrez ajouter une photo juste après avoir créé le produit.
+              Vous pourrez ajouter une photo juste apres avoir cree le produit.
             </p>
           )}
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={isSaving}
-              className="flex-1 rounded-md bg-gray-900 py-2 text-white hover:bg-gray-800 disabled:opacity-50"
+              className="flex-1 rounded-md bg-teal-700 py-2 text-white hover:bg-teal-800 disabled:opacity-50"
             >
               {isSaving
                 ? "Enregistrement..."
@@ -305,7 +307,7 @@ export default function ProductsPage() {
         </form>
       )}
 
-      {!showForm && error && <p className="text-sm text-red-600">{error}</p>}
+      {!showForm && error ? <p className="text-sm text-red-600">{error}</p> : null}
 
       {products.length === 0 ? (
         <p className="rounded-lg bg-white p-6 text-sm text-gray-600 shadow">
@@ -317,7 +319,6 @@ export default function ProductsPage() {
             <li key={p.id} className="space-y-2 p-4">
               <div className="flex items-start gap-3">
                 {p.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={p.image_url}
                     alt={p.name}
@@ -333,7 +334,7 @@ export default function ProductsPage() {
                     <div>
                       <p className="font-medium text-gray-900">{p.name}</p>
                       <p className="text-sm text-gray-600">
-                        {formatFcfa(p.price)} · Stock : {p.stock}
+                        {formatFcfa(p.price)} - Stock : {p.stock}
                       </p>
                       <p className="text-xs text-gray-500">
                         {categoryName(p.category_id)}
@@ -342,11 +343,11 @@ export default function ProductsPage() {
                     <span
                       className={`whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium ${
                         p.active
-                          ? "bg-green-100 text-green-800"
+                          ? "bg-teal-100 text-teal-800"
                           : "bg-gray-200 text-gray-700"
                       }`}
                     >
-                      {p.active ? "Actif" : "Masqué"}
+                      {p.active ? "Actif" : "Masque"}
                     </span>
                   </div>
                 </div>
@@ -355,13 +356,13 @@ export default function ProductsPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => startEdit(p)}
-                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:border-teal-600 hover:text-teal-700"
                 >
                   Modifier
                 </button>
                 <button
                   onClick={() => toggleActive(p)}
-                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:border-teal-600 hover:text-teal-700"
                 >
                   {p.active ? "Masquer" : "Activer"}
                 </button>
@@ -371,7 +372,7 @@ export default function ProductsPage() {
                 >
                   Supprimer
                 </button>
-                <label className="cursor-pointer rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                <label className="cursor-pointer rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:border-teal-600 hover:text-teal-700">
                   {uploadingImageFor === p.id ? "Envoi..." : "Changer la photo"}
                   <input
                     ref={fileInputRef}

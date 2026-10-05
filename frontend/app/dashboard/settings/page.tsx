@@ -118,7 +118,7 @@ export default function SettingsPage() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none";
+    "w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-teal-600 focus:outline-none";
   const labelClass = "mb-1 block text-sm font-medium text-gray-700";
 
   return (
@@ -157,12 +157,12 @@ export default function SettingsPage() {
                 className="h-20 w-20 rounded-full object-cover"
               />
             ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-200 text-2xl font-semibold text-gray-500">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-teal-100 text-2xl font-semibold text-teal-700">
                 {shop.name.charAt(0).toUpperCase()}
               </div>
             )}
             <div>
-              <label className="inline-block cursor-pointer rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+              <label className="inline-block cursor-pointer rounded-md border border-teal-700 px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50">
                 {isUploadingLogo ? "Envoi en cours..." : "Changer le logo"}
                 <input
                   ref={fileInputRef}
@@ -242,7 +242,7 @@ export default function SettingsPage() {
         <button
           type="submit"
           disabled={isSaving}
-          className="w-full rounded-md bg-gray-900 py-2 text-white transition hover:bg-gray-800 disabled:opacity-50"
+          className="w-full rounded-md bg-teal-700 py-2 text-white transition hover:bg-teal-800 disabled:opacity-50"
         >
           {isSaving ? "Enregistrement..." : shop ? "Enregistrer les modifications" : "Creer ma boutique"}
         </button>
