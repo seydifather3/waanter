@@ -14,13 +14,19 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60 * 24 * 7  # 7 jours
 
+    # Stockage des images : "local" (dev) ou "r2" (production)
     storage_backend: str = "local"
     media_dir: str = "/data/media"
     public_media_url: str = "http://localhost:8000/media"
     max_upload_mb: int = 5
 
-    # Liste des origines autorisees a contacter l'API, separees par des virgules.
-    # En developpement, seul localhost:3000 est autorise par defaut.
+    # Cloudflare R2 (utilises seulement si storage_backend == "r2")
+    r2_account_id: str | None = None
+    r2_access_key_id: str | None = None
+    r2_secret_access_key: str | None = None
+    r2_bucket: str = "waanter-images"
+    r2_public_url: str | None = None
+
     allowed_origins: str = "http://localhost:3000"
 
     model_config = SettingsConfigDict(
@@ -31,7 +37,7 @@ class Settings(BaseSettings):
 
     @property
     def allowed_origins_list(self) -> list[str]:
-        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+        return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]
 
 
 settings = Settings()

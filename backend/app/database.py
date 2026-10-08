@@ -3,23 +3,28 @@ from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 from app.config import settings
 
-engine = create_engine(settings.database_url, pool_pre_ping=True)
+# prepare_threshold=None : evite les requetes preparees cote serveur,
+# qui posent probleme avec le pooler de connexions de Neon.
+engine = create_engine(
+    settings.database_url,
+    pool_pre_ping=True,
+    connect_args={"prepare_threshold": None},
+)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 class Base(DeclarativeBase):
     """
-    Classe de base pour tous les modèles SQLAlchemy de l'application.
-    Chaque futur modèle (User, Shop, Product, ...) héritera de Base.
+    Classe de base pour tous les modeles SQLAlchemy de l'application.
     """
     pass
 
 
 def get_db():
     """
-    Dépendance FastAPI qui fournit une session de base de données,
-    et la ferme proprement après la requête (même en cas d'erreur).
+    Dependance FastAPI qui fournit une session de base de donnees,
+    et la ferme proprement apres la requete.
     """
     db = SessionLocal()
     try:
