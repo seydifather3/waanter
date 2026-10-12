@@ -21,13 +21,15 @@ export default function ProductsPage() {
   const [stock, setStock] = useState("0");
   const [categoryId, setCategoryId] = useState("");
   const [description, setDescription] = useState("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingImageFor, setUploadingImageFor] = useState<string | null>(null);
   const [needsShop, setNeedsShop] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const listFileInputRef = useRef<HTMLInputElement>(null);
+  const formFileInputRef = useRef<HTMLInputElement>(null);
 
   async function loadAll() {
     try {
@@ -59,6 +61,10 @@ export default function ProductsPage() {
     setStock("0");
     setCategoryId("");
     setDescription("");
+    setPhotoFile(null);
+    if (formFileInputRef.current) {
+      formFileInputRef.current.value = "";
+    }
     setShowForm(false);
   }
 
@@ -75,6 +81,7 @@ export default function ProductsPage() {
     setStock(String(p.stock));
     setCategoryId(p.category_id ?? "");
     setDescription(p.description ?? "");
+    setPhotoFile(null);
     setError(null);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -93,19 +100,44 @@ export default function ProductsPage() {
       description: description.trim() || null,
     };
 
+    let savedId: string;
+
     try {
       if (editingId) {
         await api.patch<Product>(`/api/v1/products/${editingId}`, body);
+        savedId = editingId;
       } else {
-        await api.post<Product>("/api/v1/products", body);
+        const created = await api.post<Product>("/api/v1/products", body);
+        savedId = created.id;
       }
-      resetForm();
-      await loadAll();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Erreur serveur");
-    } finally {
       setIsSaving(false);
+      return;
     }
+
+    // Le produit est enregistre. On envoie ensuite la photo choisie, s'il y en a une.
+    let photoError: string | null = null;
+    if (photoFile) {
+      try {
+        await uploadImage<Product>(
+          `/api/v1/products/${savedId}/image`,
+          photoFile
+        );
+      } catch (err) {
+        photoError =
+          "Produit enregistre, mais la photo n'a pas pu etre envoyee : " +
+          (err instanceof ApiError ? err.message : "erreur serveur") +
+          ". Utilisez le bouton Ajouter la photo pour reessayer.";
+      }
+    }
+
+    resetForm();
+    await loadAll();
+    if (photoError) {
+      setError(photoError);
+    }
+    setIsSaving(false);
   }
 
   async function toggleActive(p: Product) {
@@ -132,7 +164,7 @@ export default function ProductsPage() {
     }
   }
 
-  async function handleImageChange(
+  async function handleListImageChange(
     productId: string,
     e: React.ChangeEvent<HTMLInputElement>
   ) {
@@ -148,8 +180,8 @@ export default function ProductsPage() {
       setError(err instanceof ApiError ? err.message : "Erreur serveur");
     } finally {
       setUploadingImageFor(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      if (listFileInputRef.current) {
+        listFileInputRef.current.value = "";
       }
     }
   }
@@ -276,11 +308,32 @@ export default function ProductsPage() {
             />
           </div>
 
-          {!editingId && (
-            <p className="text-xs text-gray-500">
-              Vous pourrez ajouter une photo juste apres avoir cree le produit.
-            </p>
-          )}
+          <div>
+            <label className={labelClass}>
+              {editingId ? "Changer la photo (facultatif)" : "Photo (facultatif)"}
+            </label>
+            <label className="inline-block cursor-pointer rounded-md border border-teal-700 px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50">
+              {photoFile ? "Choisir une autre photo" : "Choisir une photo"}
+              <input
+                ref={formFileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) =>
+                  setPhotoFile(e.target.files ? e.target.files[0] : null)
+                }
+              />
+            </label>
+            {photoFile ? (
+              <p className="mt-1 text-sm text-gray-700">
+                Photo choisie : {photoFile.name}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-gray-500">
+                JPEG, PNG ou WebP. Elle sera envoyee quand vous enregistrez.
+              </p>
+            )}
+          </div>
 
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
@@ -373,14 +426,18 @@ export default function ProductsPage() {
                   Supprimer
                 </button>
                 <label className="cursor-pointer rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:border-teal-600 hover:text-teal-700">
-                  {uploadingImageFor === p.id ? "Envoi..." : "Changer la photo"}
+                  {uploadingImageFor === p.id
+                    ? "Envoi..."
+                    : p.image_url
+                      ? "Changer la photo"
+                      : "Ajouter la photo"}
                   <input
-                    ref={fileInputRef}
+                    ref={listFileInputRef}
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     className="hidden"
                     disabled={uploadingImageFor === p.id}
-                    onChange={(e) => handleImageChange(p.id, e)}
+                    onChange={(e) => handleListImageChange(p.id, e)}
                   />
                 </label>
               </div>
