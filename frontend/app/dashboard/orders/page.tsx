@@ -14,6 +14,16 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: "Annulee",
 };
 
+const STATUS_COLORS: Record<string, string> = {
+  PENDING: "bg-gray-100 text-gray-700",
+  CONFIRMED: "bg-teal-100 text-teal-800",
+  PREPARING: "bg-teal-100 text-teal-800",
+  READY: "bg-teal-100 text-teal-800",
+  OUT_FOR_DELIVERY: "bg-teal-100 text-teal-800",
+  DELIVERED: "bg-teal-700 text-white",
+  CANCELLED: "bg-red-100 text-red-700",
+};
+
 const STATUS_OPTIONS = Object.keys(STATUS_LABELS);
 
 function formatFcfa(value: string | number): string {
@@ -84,7 +94,10 @@ export default function OrdersPage() {
           {orders.map((order) => {
             const isExpanded = expandedId === order.id;
             return (
-              <li key={order.id} className="rounded-lg bg-white p-4 shadow">
+              <li
+                key={order.id}
+                className="rounded-lg border-l-4 border-teal-500 bg-white p-4 shadow"
+              >
                 <button
                   onClick={() => setExpandedId(isExpanded ? null : order.id)}
                   className="flex w-full items-center justify-between text-left"
@@ -100,7 +113,11 @@ export default function OrdersPage() {
                         : "Retrait"}
                     </p>
                   </div>
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${
+                      STATUS_COLORS[order.status] ?? "bg-gray-100 text-gray-700"
+                    }`}
+                  >
                     {STATUS_LABELS[order.status] ?? order.status}
                   </span>
                 </button>
@@ -135,7 +152,7 @@ export default function OrdersPage() {
                         onChange={(e) =>
                           handleStatusChange(order.id, e.target.value)
                         }
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-teal-600 focus:outline-none"
                       >
                         {STATUS_OPTIONS.map((s) => (
                           <option key={s} value={s}>

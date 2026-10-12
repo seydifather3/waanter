@@ -51,15 +51,20 @@ export default function CustomersPage() {
       ) : (
         <ul className="divide-y rounded-lg bg-white shadow">
           {customers.map((c) => (
-            <li key={c.id} className="p-4">
-              <p className="font-medium text-gray-900">{c.name}</p>
-              <p className="text-sm text-gray-600">{c.phone}</p>
-              {c.address ? (
-                <p className="text-sm text-gray-500">{c.address}</p>
-              ) : null}
-              <p className="mt-1 text-xs text-gray-400">
-                Client depuis le {formatDate(c.created_at)}
-              </p>
+            <li key={c.id} className="flex items-center gap-3 p-4">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-teal-100 font-semibold text-teal-700">
+                {c.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-gray-900">{c.name}</p>
+                <p className="text-sm text-gray-600">{c.phone}</p>
+                {c.address ? (
+                  <p className="text-sm text-gray-500">{c.address}</p>
+                ) : null}
+                <p className="mt-1 text-xs text-gray-400">
+                  Client depuis le {formatDate(c.created_at)}
+                </p>
+              </div>
             </li>
           ))}
         </ul>
