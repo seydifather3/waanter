@@ -20,11 +20,10 @@ export default function CategoriesPage() {
       const data = await api.get<Category[]>("/api/v1/categories");
       setCategories(data);
     } catch (err) {
-      // 404 = le commerçant n'a pas encore de boutique
       if (err instanceof ApiError && err.status === 404) {
         setNeedsShop(true);
       } else {
-        setError("Impossible de charger les catégories");
+        setError("Impossible de charger les categories");
       }
     } finally {
       setIsLoading(false);
@@ -72,7 +71,7 @@ export default function CategoriesPage() {
 
   async function handleDelete(category: Category) {
     const ok = window.confirm(
-      `Supprimer la catégorie "${category.name}" ? Les produits de cette catégorie ne seront pas supprimés.`
+      `Supprimer la categorie "${category.name}" ? Les produits de cette categorie ne seront pas supprimes.`
     );
     if (!ok) return;
 
@@ -93,16 +92,16 @@ export default function CategoriesPage() {
     return (
       <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6">
         <h1 className="text-lg font-semibold text-gray-900">
-          Créez d&apos;abord votre boutique
+          Creez d&apos;abord votre boutique
         </h1>
         <p className="mt-1 text-sm text-gray-600">
-          Il faut une boutique avant d&apos;ajouter des catégories.
+          Il faut une boutique avant d&apos;ajouter des categories.
         </p>
         <Link
           href="/dashboard/settings"
-          className="mt-3 inline-block rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-800"
+          className="mt-3 inline-block rounded-md bg-teal-700 px-4 py-2 text-sm text-white hover:bg-teal-800"
         >
-          Créer ma boutique
+          Creer ma boutique
         </Link>
       </div>
     );
@@ -110,7 +109,7 @@ export default function CategoriesPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900">Catégories</h1>
+      <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
 
       <form
         onSubmit={handleAdd}
@@ -120,24 +119,24 @@ export default function CategoriesPage() {
           type="text"
           required
           maxLength={100}
-          placeholder="Nouvelle catégorie (ex : Vêtements)"
+          placeholder="Nouvelle categorie (ex : Vetements)"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-teal-600 focus:outline-none"
         />
         <button
           type="submit"
-          className="whitespace-nowrap rounded-md bg-gray-900 px-4 py-2 text-white hover:bg-gray-800"
+          className="whitespace-nowrap rounded-md bg-teal-700 px-4 py-2 text-white hover:bg-teal-800"
         >
           Ajouter
         </button>
       </form>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
       {categories.length === 0 ? (
         <p className="rounded-lg bg-white p-6 text-sm text-gray-600 shadow">
-          Aucune catégorie pour le moment. Ajoutez la première ci-dessus.
+          Aucune categorie pour le moment. Ajoutez la premiere ci-dessus.
         </p>
       ) : (
         <ul className="divide-y rounded-lg bg-white shadow">
@@ -153,11 +152,11 @@ export default function CategoriesPage() {
                     value={editingName}
                     maxLength={100}
                     onChange={(e) => setEditingName(e.target.value)}
-                    className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none"
+                    className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-teal-600 focus:outline-none"
                   />
                   <button
                     onClick={() => handleSaveEdit(category.id)}
-                    className="rounded-md bg-gray-900 px-3 py-2 text-sm text-white hover:bg-gray-800"
+                    className="rounded-md bg-teal-700 px-3 py-2 text-sm text-white hover:bg-teal-800"
                   >
                     Enregistrer
                   </button>
@@ -175,7 +174,7 @@ export default function CategoriesPage() {
                   </span>
                   <button
                     onClick={() => startEdit(category)}
-                    className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:border-teal-600 hover:text-teal-700"
                   >
                     Renommer
                   </button>
