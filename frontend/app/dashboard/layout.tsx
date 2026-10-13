@@ -72,8 +72,6 @@ export default function DashboardLayout({
             {shopSlug ? (
               <Link
                 href={`/shop/${shopSlug}`}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="rounded-md bg-teal-700 px-2 py-1 text-xs font-medium text-white hover:bg-teal-800 sm:px-3 sm:text-sm"
               >
                 Voir ma boutique
