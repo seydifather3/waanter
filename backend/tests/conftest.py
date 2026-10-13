@@ -6,23 +6,29 @@ from sqlalchemy.orm import sessionmaker
 from app.main import app
 from app.database import Base, get_db
 from app.config import settings
+from app.core.rate_limit import reset_all_limiters
 
 if not settings.test_database_url:
     raise RuntimeError(
-        "TEST_DATABASE_URL n'est pas definie. Ajoutez-la dans le fichier .env "
-        "(voir docs/ARCHITECTURE.md ou le message de l'etape 15)."
+        "TEST_DATABASE_URL n'est pas definie. Ajoutez-la dans le fichier .env."
     )
 
 engine = create_engine(settings.test_database_url)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
+@pytest.fixture(autouse=True)
+def _reset_rate_limiters():
+    """Remet les compteurs de limitation a zero avant chaque test."""
+    reset_all_limiters()
+    yield
+
+
 @pytest.fixture()
 def db_session():
     """
     Cree un schema de base de donnees vide avant chaque test,
-    et le supprime juste apres. Chaque test est totalement isole
-    des autres, et la base de developpement n'est jamais touchee.
+    et le supprime juste apres.
     """
     Base.metadata.create_all(bind=engine)
     session = TestingSessionLocal()

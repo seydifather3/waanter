@@ -6,12 +6,18 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserRead
 from app.schemas.auth import LoginRequest, Token
 from app.core.security import hash_password, verify_password, create_access_token
+from app.core.rate_limit import login_limiter, register_limiter
 from app.api.deps import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register",
+    response_model=UserRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(register_limiter)],
+)
 def register(payload: UserCreate, db: Session = Depends(get_db)):
     """
     Crée un nouveau compte commerçant.
@@ -36,7 +42,11 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
     return user
 
 
-@router.post("/login", response_model=Token)
+@router.post(
+    "/login",
+    response_model=Token,
+    dependencies=[Depends(login_limiter)],
+)
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
     """
     Vérifie les identifiants (email ou téléphone) et renvoie un token JWT.

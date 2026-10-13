@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
+from app.core.rate_limit import order_limiter
 from app.api.v1 import (
     auth,
     shops,
@@ -44,7 +45,11 @@ app.include_router(customers.router, prefix="/api/v1")
 app.include_router(stats.router, prefix="/api/v1")
 app.include_router(uploads.router, prefix="/api/v1")
 app.include_router(public.router, prefix="/api/v1")
-app.include_router(public_orders.router, prefix="/api/v1")
+app.include_router(
+    public_orders.router,
+    prefix="/api/v1",
+    dependencies=[Depends(order_limiter)],
+)
 
 if settings.storage_backend == "local":
     os.makedirs(settings.media_dir, exist_ok=True)
@@ -53,12 +58,12 @@ if settings.storage_backend == "local":
 
 @app.get("/health")
 def health_check():
-    """Endpoint de verification de sante du service."""
+    """Endpoint de vérification de santé du service."""
     return {"status": "ok", "service": "waanter-api"}
 
 
 @app.get("/health/db")
 def health_check_db(db: Session = Depends(get_db)):
-    """Verifie que l'API peut reellement se connecter a PostgreSQL."""
+    """Vérifie que l'API peut réellement se connecter à PostgreSQL."""
     db.execute(text("SELECT 1"))
     return {"status": "ok", "database": "connected"}
