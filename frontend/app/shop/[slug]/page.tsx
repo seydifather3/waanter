@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "../../lib/api";
+import { isAuthenticated } from "../../lib/auth";
 import { useCart } from "../../lib/cart";
 import type { PublicCatalog, PublicShop } from "../../lib/types";
 
@@ -25,6 +26,12 @@ export default function PublicShopPage() {
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addedId, setAddedId] = useState<string | null>(null);
+  const [isMerchant, setIsMerchant] = useState(false);
+
+  // Un commercant connecte voit un lien pour revenir a son tableau de bord.
+  useEffect(() => {
+    setIsMerchant(isAuthenticated());
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -100,6 +107,19 @@ export default function PublicShopPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
+      {isMerchant ? (
+        <div className="bg-teal-700">
+          <div className="mx-auto max-w-3xl px-4 py-2">
+            <Link
+              href="/dashboard"
+              className="text-sm font-medium text-white hover:underline"
+            >
+              Retour au tableau de bord
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
       <header className="bg-white shadow-sm">
         <div className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-6">
           {shop.logo_url ? (
