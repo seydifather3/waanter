@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { api } from "../lib/api";
 import { clearToken, isAuthenticated } from "../lib/auth";
+import type { Shop } from "../lib/types";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Accueil" },
@@ -23,6 +25,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [checked, setChecked] = useState(false);
+  const [shopSlug, setShopSlug] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -31,6 +34,18 @@ export default function DashboardLayout({
       setChecked(true);
     }
   }, [router]);
+
+  // Recupere l'adresse de la boutique tant qu'on ne l'a pas.
+  // Si le commercant cree sa boutique, le lien apparait des qu'il change de page.
+  useEffect(() => {
+    if (!checked || shopSlug) return;
+    api
+      .get<Shop>("/api/v1/shops/me")
+      .then((shop) => setShopSlug(shop.slug))
+      .catch(() => {
+        // Pas encore de boutique (404) ou erreur : on n'affiche simplement pas le lien
+      });
+  }, [checked, pathname, shopSlug]);
 
   function handleLogout() {
     clearToken();
@@ -44,21 +59,33 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3">
           <Image
             src="/logo.png"
             alt="Waantér"
             width={140}
             height={45}
             priority
-            className="h-auto w-32"
+            className="h-auto w-24 sm:w-32"
           />
-          <button
-            onClick={handleLogout}
-            className="rounded-md border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:border-teal-600 hover:text-teal-700"
-          >
-            Deconnexion
-          </button>
+          <div className="flex items-center gap-2">
+            {shopSlug ? (
+              <Link
+                href={`/shop/${shopSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-md bg-teal-700 px-2 py-1 text-xs font-medium text-white hover:bg-teal-800 sm:px-3 sm:text-sm"
+              >
+                Voir ma boutique
+              </Link>
+            ) : null}
+            <button
+              onClick={handleLogout}
+              className="rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:border-teal-600 hover:text-teal-700 sm:px-3 sm:text-sm"
+            >
+              Deconnexion
+            </button>
+          </div>
         </div>
         <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 pb-2">
           {NAV_ITEMS.map((item) => {
