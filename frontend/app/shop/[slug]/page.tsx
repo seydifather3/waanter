@@ -27,6 +27,9 @@ export default function PublicShopPage() {
   const [error, setError] = useState<string | null>(null);
   const [addedId, setAddedId] = useState<string | null>(null);
   const [isMerchant, setIsMerchant] = useState(false);
+  const [zoomed, setZoomed] = useState<{ url: string; name: string } | null>(
+    null
+  );
 
   // Un commercant connecte voit une fleche pour revenir a son tableau de bord.
   useEffect(() => {
@@ -62,6 +65,21 @@ export default function PublicShopPage() {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [highlightedProductId, catalog]);
+
+  // Zoom : fermeture avec la touche Echap, et page figee derriere l'image.
+  useEffect(() => {
+    if (!zoomed) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setZoomed(null);
+    }
+    document.addEventListener("keydown", onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [zoomed]);
 
   function handleAdd(id: string, name: string, price: string) {
     cart.addItem({ productId: id, name: name, price: Number(price) });
@@ -107,31 +125,34 @@ export default function PublicShopPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      <header className="bg-white shadow-sm">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-6">
-          {isMerchant ? (
-            <Link
-              href="/dashboard"
-              aria-label="Retour au tableau de bord"
-              title="Retour au tableau de bord"
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-teal-700 text-white shadow hover:bg-teal-800"
+      {isMerchant ? (
+        <div className="mx-auto max-w-3xl px-4 pt-3">
+          <Link
+            href="/dashboard"
+            aria-label="Retour au tableau de bord"
+            title="Retour au tableau de bord"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-700 text-white shadow hover:bg-teal-800"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-5 w-5"
+              aria-hidden="true"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-5 w-5"
-                aria-hidden="true"
-              >
-                <path d="M19 12H5" />
-                <path d="M12 19l-7-7 7-7" />
-              </svg>
-            </Link>
-          ) : null}
+              <path d="M19 12H5" />
+              <path d="M12 19l-7-7 7-7" />
+            </svg>
+          </Link>
+        </div>
+      ) : null}
+
+      <header className="mt-3 bg-white shadow-sm">
+        <div className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-6">
           {shop.logo_url ? (
             <img
               src={shop.logo_url}
@@ -204,6 +225,7 @@ export default function PublicShopPage() {
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {visibleProducts.map((p) => {
               const isHighlighted = p.id === highlightedProductId;
+              const imageUrl = p.image_url;
               return (
                 <li
                   key={p.id}
@@ -212,12 +234,19 @@ export default function PublicShopPage() {
                     isHighlighted ? "ring-2 ring-teal-600" : ""
                   }`}
                 >
-                  {p.image_url ? (
-                    <img
-                      src={p.image_url}
-                      alt={p.name}
-                      className="aspect-square w-full bg-gray-50 object-contain"
-                    />
+                  {imageUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => setZoomed({ url: imageUrl, name: p.name })}
+                      aria-label={`Agrandir la photo de ${p.name}`}
+                      className="block w-full cursor-zoom-in"
+                    >
+                      <img
+                        src={imageUrl}
+                        alt={p.name}
+                        className="aspect-square w-full bg-gray-50 object-contain"
+                      />
+                    </button>
                   ) : (
                     <div className="flex aspect-square w-full items-center justify-center bg-gray-100 text-sm text-gray-400">
                       Pas de photo
@@ -252,6 +281,43 @@ export default function PublicShopPage() {
           </ul>
         )}
       </main>
+
+      {zoomed ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={zoomed.name}
+          onClick={() => setZoomed(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+        >
+          <button
+            type="button"
+            onClick={() => setZoomed(null)}
+            aria-label="Fermer"
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-900 shadow"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              className="h-5 w-5"
+              aria-hidden="true"
+            >
+              <path d="M18 6L6 18" />
+              <path d="M6 6l12 12" />
+            </svg>
+          </button>
+          <img
+            src={zoomed.url}
+            alt={zoomed.name}
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[90vh] max-w-full rounded-md object-contain"
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
