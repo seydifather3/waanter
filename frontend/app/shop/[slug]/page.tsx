@@ -28,7 +28,7 @@ export default function PublicShopPage() {
   const [addedId, setAddedId] = useState<string | null>(null);
   const [isMerchant, setIsMerchant] = useState(false);
 
-  // Un commercant connecte voit un lien pour revenir a son tableau de bord.
+  // Un commercant connecte voit une fleche pour revenir a son tableau de bord.
   useEffect(() => {
     setIsMerchant(isAuthenticated());
   }, []);
@@ -107,21 +107,31 @@ export default function PublicShopPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {isMerchant ? (
-        <div className="bg-teal-700">
-          <div className="mx-auto max-w-3xl px-4 py-2">
+      <header className="bg-white shadow-sm">
+        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-6">
+          {isMerchant ? (
             <Link
               href="/dashboard"
-              className="text-sm font-medium text-white hover:underline"
+              aria-label="Retour au tableau de bord"
+              title="Retour au tableau de bord"
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-teal-700 text-white shadow hover:bg-teal-800"
             >
-              Retour au tableau de bord
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+                aria-hidden="true"
+              >
+                <path d="M19 12H5" />
+                <path d="M12 19l-7-7 7-7" />
+              </svg>
             </Link>
-          </div>
-        </div>
-      ) : null}
-
-      <header className="bg-white shadow-sm">
-        <div className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-6">
+          ) : null}
           {shop.logo_url ? (
             <img
               src={shop.logo_url}
