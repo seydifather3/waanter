@@ -11,32 +11,49 @@ function formatFcfa(value: number | string): string {
   return `${Number(value).toLocaleString("fr-FR")} FCFA`;
 }
 
-function buildWhatsAppLink(
-  shopPhone: string,
-  slug: string,
-  order: Order
-): string {
-  const baseUrl =
-    typeof window !== "undefined" ? window.location.origin : "";
+interface CustomerInfo {
+  name: string;
+  phone: string;
+}
 
-  const lines = order.items.flatMap((i) => [
+function buildWhatsAppLink(
+  shop: { phone: string; name: string },
+  slug: string,
+  order: Order,
+  customer: CustomerInfo
+): string {
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const orderNumber = order.id.slice(0, 8).toUpperCase();
+
+  const infoLines = [
+    "Mes informations :",
+    `Nom : ${customer.name}`,
+    `Téléphone : ${customer.phone}`,
+  ];
+  if (order.delivery_method === "delivery") {
+    infoLines.push("Réception : Livraison");
+    infoLines.push(`Adresse : ${order.delivery_address ?? ""}`);
+  } else {
+    infoLines.push("Réception : Retrait en boutique");
+  }
+
+  const itemLines = order.items.flatMap((i) => [
     `- ${i.product_name} x${i.quantity} : ${formatFcfa(i.subtotal)}`,
     `  Voir le produit : ${baseUrl}/shop/${slug}?produit=${i.product_id}`,
   ]);
 
-  const deliveryLine =
-    order.delivery_method === "delivery"
-      ? `Livraison a : ${order.delivery_address}`
-      : "Retrait en boutique";
-
   const message = [
-    `Bonjour, je viens de passer une commande :`,
-    ...lines,
+    `Bonjour, je viens de passer une commande (n° ${orderNumber}) sur ${shop.name}.`,
+    "",
+    ...infoLines,
+    "",
+    "Ma commande :",
+    ...itemLines,
+    "",
     `Total : ${formatFcfa(order.total)}`,
-    deliveryLine,
   ].join("\n");
 
-  const digitsOnly = shopPhone.replace(/[^0-9]/g, "");
+  const digitsOnly = shop.phone.replace(/[^0-9]/g, "");
   return `https://wa.me/${digitsOnly}?text=${encodeURIComponent(message)}`;
 }
 
@@ -78,10 +95,13 @@ export default function CartPage() {
         body
       );
 
-      const shop = await api.get<{ phone: string }>(
+      const shop = await api.get<{ phone: string; name: string }>(
         `/api/v1/public/shops/${slug}`
       );
-      const link = buildWhatsAppLink(shop.phone, slug, order);
+      const link = buildWhatsAppLink(shop, slug, order, {
+        name: name.trim(),
+        phone: phone.trim(),
+      });
 
       cart.clear();
       setWhatsappLink(link);
@@ -101,7 +121,7 @@ export default function CartPage() {
       <div className="min-h-screen bg-gray-50">
         <main className="mx-auto max-w-3xl space-y-4 px-4 py-10 text-center">
           <h1 className="text-2xl font-bold text-gray-900">
-            Commande enregistree !
+            Commande enregistrée !
           </h1>
           <p className="text-gray-600">
             Envoyez votre commande au vendeur sur WhatsApp pour la confirmer.
@@ -119,7 +139,7 @@ export default function CartPage() {
               href={`/shop/${slug}`}
               className="mt-4 inline-block text-sm text-gray-600 hover:underline"
             >
-              Retour a la boutique
+              Retour à la boutique
             </Link>
           </div>
         </main>
@@ -135,7 +155,7 @@ export default function CartPage() {
             href={`/shop/${slug}`}
             className="text-sm font-medium text-gray-700 hover:underline"
           >
-            Retour a la boutique
+            Retour à la boutique
           </Link>
           <h1 className="text-lg font-bold text-gray-900">Mon panier</h1>
         </div>
@@ -225,7 +245,7 @@ export default function CartPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Votre telephone</label>
+                  <label className={labelClass}>Votre téléphone</label>
                   <input
                     type="tel"
                     required
@@ -237,7 +257,7 @@ export default function CartPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Mode de reception</label>
+                  <label className={labelClass}>Mode de réception</label>
                   <div className="flex gap-3">
                     <button
                       type="button"

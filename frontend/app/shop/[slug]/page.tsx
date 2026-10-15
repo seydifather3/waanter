@@ -1,314 +1,225 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { api, ApiError } from "../../../lib/api";
-import { useCart } from "../../../lib/cart";
-import type { Order } from "../../../lib/types";
+import { api, ApiError } from "../../lib/api";
+import { useCart } from "../../lib/cart";
+import type { PublicCatalog, PublicShop } from "../../lib/types";
 
-function formatFcfa(value: number | string): string {
+function formatFcfa(value: string | number): string {
   return `${Number(value).toLocaleString("fr-FR")} FCFA`;
 }
 
-interface CustomerInfo {
-  name: string;
-  phone: string;
-}
-
-function buildWhatsAppLink(
-  shop: { phone: string; name: string },
-  slug: string,
-  order: Order,
-  customer: CustomerInfo
-): string {
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const orderNumber = order.id.slice(0, 8).toUpperCase();
-
-  const infoLines = [
-    "Mes informations :",
-    `Nom : ${customer.name}`,
-    `Téléphone : ${customer.phone}`,
-  ];
-  if (order.delivery_method === "delivery") {
-    infoLines.push("Réception : Livraison");
-    infoLines.push(`Adresse : ${order.delivery_address ?? ""}`);
-  } else {
-    infoLines.push("Réception : Retrait en boutique");
-  }
-
-  const itemLines = order.items.flatMap((i) => [
-    `- ${i.product_name} x${i.quantity} : ${formatFcfa(i.subtotal)}`,
-    `  Voir le produit : ${baseUrl}/shop/${slug}?produit=${i.product_id}`,
-  ]);
-
-  const message = [
-    `Bonjour, je viens de passer une commande (n° ${orderNumber}) sur ${shop.name}.`,
-    "",
-    ...infoLines,
-    "",
-    "Ma commande :",
-    ...itemLines,
-    "",
-    `Total : ${formatFcfa(order.total)}`,
-  ].join("\n");
-
-  const digitsOnly = shop.phone.replace(/[^0-9]/g, "");
-  return `https://wa.me/${digitsOnly}?text=${encodeURIComponent(message)}`;
-}
-
-export default function CartPage() {
+export default function PublicShopPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
+  const searchParams = useSearchParams();
+  const highlightedProductId = searchParams.get("produit");
   const cart = useCart();
 
-  const [showCheckout, setShowCheckout] = useState(false);
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">(
-    "delivery"
-  );
-  const [address, setAddress] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shop, setShop] = useState<PublicShop | null>(null);
+  const [catalog, setCatalog] = useState<PublicCatalog | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [whatsappLink, setWhatsappLink] = useState<string | null>(null);
+  const [addedId, setAddedId] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-
-    const body = {
-      customer_name: name,
-      customer_phone: phone,
-      delivery_method: deliveryMethod,
-      delivery_address: deliveryMethod === "delivery" ? address : null,
-      items: cart.items.map((i) => ({
-        product_id: i.productId,
-        quantity: i.quantity,
-      })),
-    };
-
-    try {
-      const order = await api.post<Order>(
-        `/api/v1/public/shops/${slug}/orders`,
-        body
-      );
-
-      const shop = await api.get<{ phone: string; name: string }>(
-        `/api/v1/public/shops/${slug}`
-      );
-      const link = buildWhatsAppLink(shop, slug, order, {
-        name: name.trim(),
-        phone: phone.trim(),
-      });
-
-      cart.clear();
-      setWhatsappLink(link);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Erreur serveur");
-    } finally {
-      setIsSubmitting(false);
+  useEffect(() => {
+    async function load() {
+      try {
+        const [shopData, catalogData] = await Promise.all([
+          api.get<PublicShop>(`/api/v1/public/shops/${slug}`),
+          api.get<PublicCatalog>(`/api/v1/public/shops/${slug}/products`),
+        ]);
+        setShop(shopData);
+        setCatalog(catalogData);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          setNotFound(true);
+        } else {
+          setError("Impossible de charger la boutique");
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }
+    load();
+  }, [slug]);
+
+  useEffect(() => {
+    if (!highlightedProductId || !catalog) return;
+    const el = document.getElementById(`produit-${highlightedProductId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightedProductId, catalog]);
+
+  function handleAdd(id: string, name: string, price: string) {
+    cart.addItem({ productId: id, name: name, price: Number(price) });
+    setAddedId(id);
+    setTimeout(() => setAddedId(null), 1200);
   }
 
-  const inputClass =
-    "w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-teal-600 focus:outline-none";
-  const labelClass = "mb-1 block text-sm font-medium text-gray-700";
-
-  if (whatsappLink) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <main className="mx-auto max-w-3xl space-y-4 px-4 py-10 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Commande enregistrée !
-          </h1>
-          <p className="text-gray-600">
-            Envoyez votre commande au vendeur sur WhatsApp pour la confirmer.
-          </p>
-          <a
-            href={whatsappLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block rounded-md bg-green-600 px-6 py-3 font-medium text-white hover:bg-green-700"
-          >
-            Envoyer sur WhatsApp
-          </a>
-          <div>
-            <Link
-              href={`/shop/${slug}`}
-              className="mt-4 inline-block text-sm text-gray-600 hover:underline"
-            >
-              Retour à la boutique
-            </Link>
-          </div>
-        </main>
-      </div>
+      <main className="flex min-h-screen items-center justify-center bg-gray-50">
+        <p className="text-gray-600">Chargement...</p>
+      </main>
     );
   }
 
+  if (notFound) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-6 text-center">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Boutique introuvable
+        </h1>
+        <p className="mt-2 text-gray-600">
+          Ce lien n&apos;est pas valide. Verifiez l&apos;adresse de la boutique.
+        </p>
+      </main>
+    );
+  }
+
+  if (error || !shop || !catalog) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
+        <p className="text-red-600">{error ?? "Une erreur est survenue"}</p>
+      </main>
+    );
+  }
+
+  const visibleProducts = selectedCategory
+    ? catalog.products.filter((p) => p.category_id === selectedCategory)
+    : catalog.products;
+
+  const chipBase =
+    "whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium";
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <header className="bg-white shadow-sm">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-4">
+        <div className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-6">
+          {shop.logo_url ? (
+            <img
+              src={shop.logo_url}
+              alt={shop.name}
+              className="h-16 w-16 flex-shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-teal-100 text-xl font-semibold text-teal-700">
+              {shop.name.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl font-bold text-gray-900">{shop.name}</h1>
+            {shop.description ? (
+              <p className="mt-1 text-sm text-gray-600">{shop.description}</p>
+            ) : null}
+            <p className="mt-1 text-sm text-gray-500">
+              {[shop.city, shop.phone].filter(Boolean).join(" - ")}
+            </p>
+          </div>
           <Link
-            href={`/shop/${slug}`}
-            className="text-sm font-medium text-gray-700 hover:underline"
+            href={`/shop/${slug}/panier`}
+            className="relative flex-shrink-0 rounded-full bg-teal-700 p-3 text-white"
+            aria-label="Voir le panier"
           >
-            Retour à la boutique
+            Panier
+            {cart.totalItems > 0 ? (
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold">
+                {cart.totalItems}
+              </span>
+            ) : null}
           </Link>
-          <h1 className="text-lg font-bold text-gray-900">Mon panier</h1>
         </div>
       </header>
 
       <main className="mx-auto max-w-3xl space-y-4 px-4 py-4">
-        {cart.items.length === 0 ? (
-          <div className="rounded-lg bg-white p-6 text-center shadow">
-            <p className="text-gray-600">Votre panier est vide.</p>
-            <Link
-              href={`/shop/${slug}`}
-              className="mt-3 inline-block rounded-md bg-teal-700 px-4 py-2 text-sm text-white hover:bg-teal-800"
+        {catalog.categories.length > 0 ? (
+          <nav className="flex gap-2 overflow-x-auto pb-1">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`${chipBase} ${
+                selectedCategory === null
+                  ? "bg-teal-700 text-white"
+                  : "bg-white text-gray-700 shadow-sm"
+              }`}
             >
-              Voir les produits
-            </Link>
-          </div>
-        ) : (
-          <>
-            <ul className="divide-y rounded-lg bg-white shadow">
-              {cart.items.map((item) => (
-                <li key={item.productId} className="flex items-center gap-3 p-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-gray-900">{item.name}</p>
-                    <p className="text-sm text-gray-600">
-                      {formatFcfa(item.price)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => cart.decrement(item.productId)}
-                      className="h-8 w-8 rounded-md border border-gray-300 text-gray-700 hover:border-teal-600"
-                    >
-                      -
-                    </button>
-                    <span className="w-6 text-center text-gray-900">
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={() => cart.increment(item.productId)}
-                      className="h-8 w-8 rounded-md border border-gray-300 text-gray-700 hover:border-teal-600"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => cart.removeItem(item.productId)}
-                    className="ml-2 text-sm text-red-600 hover:underline"
-                  >
-                    Retirer
-                  </button>
-                </li>
-              ))}
-            </ul>
-
-            <div className="rounded-lg bg-white p-4 shadow">
-              <div className="flex items-center justify-between text-lg font-semibold text-gray-900">
-                <span>Total</span>
-                <span>{formatFcfa(cart.totalPrice)}</span>
-              </div>
-            </div>
-
-            {!showCheckout ? (
+              Tout
+            </button>
+            {catalog.categories.map((c) => (
               <button
-                onClick={() => setShowCheckout(true)}
-                className="w-full rounded-md bg-teal-700 py-3 font-medium text-white hover:bg-teal-800"
+                key={c.id}
+                onClick={() => setSelectedCategory(c.id)}
+                className={`${chipBase} ${
+                  selectedCategory === c.id
+                    ? "bg-teal-700 text-white"
+                    : "bg-white text-gray-700 shadow-sm"
+                }`}
               >
-                Passer la commande
+                {c.name}
               </button>
-            ) : (
-              <form
-                onSubmit={handleSubmit}
-                className="space-y-4 rounded-lg bg-white p-6 shadow"
-              >
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Vos informations
-                </h2>
+            ))}
+          </nav>
+        ) : null}
 
-                <div>
-                  <label className={labelClass}>Votre nom</label>
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-
-                <div>
-                  <label className={labelClass}>Votre téléphone</label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="+221 77 000 00 00"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-
-                <div>
-                  <label className={labelClass}>Mode de réception</label>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setDeliveryMethod("delivery")}
-                      className={`flex-1 rounded-md border px-4 py-2 text-sm font-medium ${
-                        deliveryMethod === "delivery"
-                          ? "border-teal-700 bg-teal-700 text-white"
-                          : "border-gray-300 text-gray-700"
-                      }`}
-                    >
-                      Livraison
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeliveryMethod("pickup")}
-                      className={`flex-1 rounded-md border px-4 py-2 text-sm font-medium ${
-                        deliveryMethod === "pickup"
-                          ? "border-teal-700 bg-teal-700 text-white"
-                          : "border-gray-300 text-gray-700"
-                      }`}
-                    >
-                      Retrait en boutique
-                    </button>
-                  </div>
-                </div>
-
-                {deliveryMethod === "delivery" ? (
-                  <div>
-                    <label className={labelClass}>Adresse de livraison</label>
-                    <input
-                      type="text"
-                      required
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className={inputClass}
-                    />
-                  </div>
-                ) : null}
-
-                {error ? <p className="text-sm text-red-600">{error}</p> : null}
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full rounded-md bg-teal-700 py-3 font-medium text-white hover:bg-teal-800 disabled:opacity-50"
+        {visibleProducts.length === 0 ? (
+          <p className="rounded-lg bg-white p-6 text-sm text-gray-600 shadow">
+            Aucun produit disponible pour le moment.
+          </p>
+        ) : (
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {visibleProducts.map((p) => {
+              const isHighlighted = p.id === highlightedProductId;
+              return (
+                <li
+                  key={p.id}
+                  id={`produit-${p.id}`}
+                  className={`overflow-hidden rounded-lg bg-white shadow ${
+                    isHighlighted ? "ring-2 ring-teal-600" : ""
+                  }`}
                 >
-                  {isSubmitting ? "Envoi..." : "Confirmer la commande"}
-                </button>
-              </form>
-            )}
-          </>
+                  {p.image_url ? (
+                    <img
+                      src={p.image_url}
+                      alt={p.name}
+                      className="aspect-square w-full bg-gray-50 object-contain"
+                    />
+                  ) : (
+                    <div className="flex aspect-square w-full items-center justify-center bg-gray-100 text-sm text-gray-400">
+                      Pas de photo
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <p className="font-medium text-gray-900">{p.name}</p>
+                    {p.description ? (
+                      <p className="mt-1 line-clamp-2 text-sm text-gray-600">
+                        {p.description}
+                      </p>
+                    ) : null}
+                    <p className="mt-2 text-lg font-semibold text-gray-900">
+                      {formatFcfa(p.price)}
+                    </p>
+                    {!p.in_stock ? (
+                      <p className="mt-1 text-sm font-medium text-red-600">
+                        Rupture de stock
+                      </p>
+                    ) : (
+                      <button
+                        onClick={() => handleAdd(p.id, p.name, p.price)}
+                        className="mt-3 w-full rounded-md bg-teal-700 py-2 text-sm font-medium text-white hover:bg-teal-800"
+                      >
+                        {addedId === p.id ? "Ajoute !" : "Ajouter au panier"}
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </main>
     </div>
