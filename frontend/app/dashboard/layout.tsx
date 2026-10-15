@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { api } from "../lib/api";
 import { clearToken, isAuthenticated } from "../lib/auth";
+import type { Shop } from "../lib/types";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Accueil" },
@@ -24,6 +26,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [checked, setChecked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [shopSlug, setShopSlug] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -32,6 +35,16 @@ export default function DashboardLayout({
       setChecked(true);
     }
   }, [router]);
+
+  // Recupere le lien de la boutique pour le bouton "Voir ma boutique".
+  // Si le commercant n'a pas encore de boutique, le bouton n'apparait pas.
+  useEffect(() => {
+    if (!checked) return;
+    api
+      .get<Shop>("/api/v1/shops/me")
+      .then((shop) => setShopSlug(shop.slug))
+      .catch(() => setShopSlug(null));
+  }, [checked, pathname]);
 
   function handleLogout() {
     clearToken();
@@ -62,7 +75,17 @@ export default function DashboardLayout({
           />
 
           <div className="flex items-center gap-2">
-            {/* Ordinateur : bouton Deconnexion visible */}
+            {/* Ordinateur : boutons visibles */}
+            {shopSlug ? (
+              <a
+                href={`/shop/${shopSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden rounded-md bg-teal-700 px-3 py-1 text-sm font-medium text-white hover:bg-teal-800 md:block"
+              >
+                Voir ma boutique
+              </a>
+            ) : null}
             <button
               onClick={handleLogout}
               className="hidden rounded-md border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:border-teal-600 hover:text-teal-700 md:block"
@@ -145,6 +168,19 @@ export default function DashboardLayout({
                   </Link>
                 </li>
               ))}
+              {shopSlug ? (
+                <li className="border-t pt-2">
+                  <a
+                    href={`/shop/${shopSlug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMenuOpen(false)}
+                    className="block rounded-md border border-teal-700 px-3 py-3 text-center text-base font-medium text-teal-700 hover:bg-teal-50"
+                  >
+                    Voir ma boutique
+                  </a>
+                </li>
+              ) : null}
               <li className="border-t pt-2">
                 <button
                   onClick={handleLogout}
