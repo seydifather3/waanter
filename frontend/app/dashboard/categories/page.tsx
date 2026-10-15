@@ -5,6 +5,26 @@ import Link from "next/link";
 import { api, ApiError } from "../../lib/api";
 import type { Category } from "../../lib/types";
 
+const SUGGESTIONS = [
+  "Vêtements",
+  "Chaussures",
+  "Électronique",
+  "Accessoires",
+  "Automobile",
+  "Cheveux et beauté",
+  "Alimentation",
+  "Maison",
+];
+
+// Compare sans tenir compte des majuscules ni des accents
+function normalize(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [newName, setNewName] = useState("");
@@ -12,6 +32,7 @@ export default function CategoriesPage() {
   const [editingName, setEditingName] = useState("");
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdding, setIsAdding] = useState(false);
   const [needsShop, setNeedsShop] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +44,7 @@ export default function CategoriesPage() {
       if (err instanceof ApiError && err.status === 404) {
         setNeedsShop(true);
       } else {
-        setError("Impossible de charger les categories");
+        setError("Impossible de charger les catégories");
       }
     } finally {
       setIsLoading(false);
@@ -34,19 +55,28 @@ export default function CategoriesPage() {
     loadCategories();
   }, []);
 
-  async function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    const name = newName.trim();
-    if (!name) return;
+  async function createCategory(rawName: string): Promise<boolean> {
+    const name = rawName.trim();
+    if (!name) return false;
 
+    setError(null);
+    setIsAdding(true);
     try {
       await api.post<Category>("/api/v1/categories", { name });
-      setNewName("");
       await loadCategories();
+      return true;
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Erreur serveur");
+      return false;
+    } finally {
+      setIsAdding(false);
     }
+  }
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    const ok = await createCategory(newName);
+    if (ok) setNewName("");
   }
 
   function startEdit(category: Category) {
@@ -71,7 +101,7 @@ export default function CategoriesPage() {
 
   async function handleDelete(category: Category) {
     const ok = window.confirm(
-      `Supprimer la categorie "${category.name}" ? Les produits de cette categorie ne seront pas supprimes.`
+      `Supprimer la catégorie "${category.name}" ? Les produits de cette catégorie ne seront pas supprimés.`
     );
     if (!ok) return;
 
@@ -92,24 +122,58 @@ export default function CategoriesPage() {
     return (
       <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6">
         <h1 className="text-lg font-semibold text-gray-900">
-          Creez d&apos;abord votre boutique
+          Créez d&apos;abord votre boutique
         </h1>
         <p className="mt-1 text-sm text-gray-600">
-          Il faut une boutique avant d&apos;ajouter des categories.
+          Il faut une boutique avant d&apos;ajouter des catégories.
         </p>
         <Link
           href="/dashboard/settings"
           className="mt-3 inline-block rounded-md bg-teal-700 px-4 py-2 text-sm text-white hover:bg-teal-800"
         >
-          Creer ma boutique
+          Créer ma boutique
         </Link>
       </div>
     );
   }
 
+  const existing = new Set(categories.map((c) => normalize(c.name)));
+  const availableSuggestions = SUGGESTIONS.filter(
+    (s) => !existing.has(normalize(s))
+  );
+
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
+      <h1 className="text-2xl font-bold text-gray-900">Catégories</h1>
+
+      <div className="rounded-lg bg-white p-4 shadow">
+        <p className="text-sm text-gray-700">
+          Une catégorie sert à ranger vos produits, par exemple « Vêtements ».
+          Vos clients peuvent ensuite choisir une catégorie pour trouver plus
+          vite ce qu&apos;ils cherchent.
+        </p>
+
+        {availableSuggestions.length > 0 ? (
+          <div className="mt-3">
+            <p className="mb-2 text-sm font-medium text-gray-900">
+              Touchez une catégorie pour l&apos;ajouter :
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {availableSuggestions.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  disabled={isAdding}
+                  onClick={() => createCategory(s)}
+                  className="rounded-full border border-teal-700 px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50 disabled:opacity-50"
+                >
+                  + {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
 
       <form
         onSubmit={handleAdd}
@@ -119,14 +183,15 @@ export default function CategoriesPage() {
           type="text"
           required
           maxLength={100}
-          placeholder="Nouvelle categorie (ex : Vetements)"
+          placeholder="Ou créez la vôtre (ex : Parfums)"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-teal-600 focus:outline-none"
         />
         <button
           type="submit"
-          className="whitespace-nowrap rounded-md bg-teal-700 px-4 py-2 text-white hover:bg-teal-800"
+          disabled={isAdding}
+          className="whitespace-nowrap rounded-md bg-teal-700 px-4 py-2 text-white hover:bg-teal-800 disabled:opacity-50"
         >
           Ajouter
         </button>
@@ -136,7 +201,8 @@ export default function CategoriesPage() {
 
       {categories.length === 0 ? (
         <p className="rounded-lg bg-white p-6 text-sm text-gray-600 shadow">
-          Aucune categorie pour le moment. Ajoutez la premiere ci-dessus.
+          Aucune catégorie pour le moment. Touchez-en une ci-dessus pour
+          commencer.
         </p>
       ) : (
         <ul className="divide-y rounded-lg bg-white shadow">
