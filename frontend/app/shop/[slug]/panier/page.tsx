@@ -16,6 +16,25 @@ interface CustomerInfo {
   phone: string;
 }
 
+function BackArrow() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
+    </svg>
+  );
+}
+
 function buildWhatsAppLink(
   shop: { phone: string; name: string },
   slug: string,
@@ -137,8 +156,9 @@ export default function CartPage() {
           <div>
             <Link
               href={`/shop/${slug}`}
-              className="mt-4 inline-block text-sm text-gray-600 hover:underline"
+              className="mt-4 inline-flex items-center gap-2 rounded-md border border-teal-700 px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50"
             >
+              <BackArrow />
               Retour à la boutique
             </Link>
           </div>
@@ -150,14 +170,23 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-4">
+        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
           <Link
             href={`/shop/${slug}`}
-            className="text-sm font-medium text-gray-700 hover:underline"
+            aria-label="Retour à la boutique"
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-teal-700 text-teal-700 hover:bg-teal-50"
           >
-            Retour à la boutique
+            <BackArrow />
           </Link>
-          <h1 className="text-lg font-bold text-gray-900">Mon panier</h1>
+          <div className="min-w-0">
+            <h1 className="text-lg font-bold text-gray-900">Mon panier</h1>
+            <Link
+              href={`/shop/${slug}`}
+              className="text-xs text-gray-500 hover:underline"
+            >
+              Retour à la boutique
+            </Link>
+          </div>
         </div>
       </header>
 
