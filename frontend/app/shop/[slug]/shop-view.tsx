@@ -4,11 +4,31 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "../../lib/api";
+import { isAuthenticated } from "../../lib/auth";
 import { useCart } from "../../lib/cart";
 import type { PublicCatalog, PublicShop } from "../../lib/types";
 
 function formatFcfa(value: string | number): string {
   return `${Number(value).toLocaleString("fr-FR")} FCFA`;
+}
+
+function BackArrow() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
+    </svg>
+  );
 }
 
 export default function PublicShopPage() {
@@ -25,6 +45,13 @@ export default function PublicShopPage() {
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addedId, setAddedId] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Lecture du navigateur : faite apres l'affichage pour eviter un conflit
+  // entre le rendu serveur et le rendu navigateur.
+  useEffect(() => {
+    setIsLoggedIn(isAuthenticated());
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -77,7 +104,7 @@ export default function PublicShopPage() {
           Boutique introuvable
         </h1>
         <p className="mt-2 text-gray-600">
-          Ce lien n&apos;est pas valide. Verifiez l&apos;adresse de la boutique.
+          Ce lien n&apos;est pas valide. Vérifiez l&apos;adresse de la boutique.
         </p>
       </main>
     );
@@ -100,6 +127,21 @@ export default function PublicShopPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
+      {/* Visible seulement pour le commercant connecte */}
+      {isLoggedIn ? (
+        <div className="bg-teal-700">
+          <div className="mx-auto flex max-w-3xl items-center px-4 py-2">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-white hover:bg-teal-800"
+            >
+              <BackArrow />
+              Retour à mon tableau de bord
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
       <header className="bg-white shadow-sm">
         <div className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-6">
           {shop.logo_url ? (
@@ -212,7 +254,7 @@ export default function PublicShopPage() {
                         onClick={() => handleAdd(p.id, p.name, p.price)}
                         className="mt-3 w-full rounded-md bg-teal-700 py-2 text-sm font-medium text-white hover:bg-teal-800"
                       >
-                        {addedId === p.id ? "Ajoute !" : "Ajouter au panier"}
+                        {addedId === p.id ? "Ajouté !" : "Ajouter au panier"}
                       </button>
                     )}
                   </div>
