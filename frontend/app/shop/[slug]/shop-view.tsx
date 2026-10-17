@@ -127,17 +127,28 @@ export default function PublicShopPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {/* Visible seulement pour le commercant connecte */}
+            {/* Visible seulement pour le commercant connecte */}
       {isLoggedIn ? (
-        <div className="bg-teal-700">
-          <div className="mx-auto flex max-w-3xl items-center px-4 py-2">
+        <div className="border-b bg-white">
+          <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-white hover:bg-teal-800"
+              aria-label="Retour à mon tableau de bord"
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-teal-700 text-teal-700 hover:bg-teal-50"
             >
               <BackArrow />
-              Retour à mon tableau de bord
             </Link>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-gray-900">
+                Aperçu de ma boutique
+              </p>
+              <Link
+                href="/dashboard"
+                className="text-xs text-gray-500 hover:underline"
+              >
+                Retour à mon tableau de bord
+              </Link>
+            </div>
           </div>
         </div>
       ) : null}
