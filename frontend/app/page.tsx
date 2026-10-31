@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import InviteCard from "./dashboard/invite-card";
 
 export default function HomePage() {
   return (
