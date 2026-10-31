@@ -1,5 +1,5 @@
 "use client";
-
+import InviteCard from "./invite-card";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -207,6 +207,7 @@ export default function DashboardPage() {
           </Link>
         </div>
       )}
+            <InviteCard />
     </div>
   );
 }

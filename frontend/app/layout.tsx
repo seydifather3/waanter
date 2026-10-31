@@ -12,10 +12,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://waanter.vercel.app";
+
+const TITLE = "Waantér - Créez votre boutique en ligne gratuitement";
+const DESCRIPTION =
+  "Créez gratuitement votre boutique en ligne et recevez vos commandes sur WhatsApp. Pensé pour les commerçants sénégalais.";
+
 export const metadata: Metadata = {
-  title: "Waantér - Creez votre boutique en ligne gratuitement",
-  description:
-    "Plateforme pour creer gratuitement sa boutique en ligne et recevoir ses commandes, pensee pour les commercants senegalais.",
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    title: TITLE,
+    description: DESCRIPTION,
+    siteName: "Waantér",
+    images: ["/logo.png"],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
