@@ -1,5 +1,5 @@
 "use client";
-import InviteCard from "./invite-card";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -7,15 +7,16 @@ import { api, ApiError } from "../lib/api";
 import { clearToken } from "../lib/auth";
 import { shareOrCopy } from "../lib/share";
 import type { Shop, ShopStats, User } from "../lib/types";
+import InviteCard from "./invite-card";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "En attente",
-  CONFIRMED: "Confirmee",
-  PREPARING: "En preparation",
-  READY: "Prete",
+  CONFIRMED: "Confirmée",
+  PREPARING: "En préparation",
+  READY: "Prête",
   OUT_FOR_DELIVERY: "En livraison",
-  DELIVERED: "Livree",
-  CANCELLED: "Annulee",
+  DELIVERED: "Livrée",
+  CANCELLED: "Annulée",
 };
 
 function formatFcfa(value: string | number): string {
@@ -67,7 +68,7 @@ export default function DashboardPage() {
     if (!shop) return;
     const url = `${window.location.origin}/shop/${shop.slug}`;
     const result = await shareOrCopy(url, shop.name);
-    setShareMessage(result === "copied" ? "Lien copie !" : null);
+    setShareMessage(result === "copied" ? "Lien copié !" : null);
     if (result === "copied") {
       setTimeout(() => setShareMessage(null), 2000);
     }
@@ -97,7 +98,7 @@ export default function DashboardPage() {
                 className="h-16 w-16 flex-shrink-0 rounded-full object-cover"
               />
             ) : (
-              <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-xl font-semibold text-gray-500">
+              <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-teal-100 text-xl font-semibold text-teal-700">
                 {shop.name.charAt(0).toUpperCase()}
               </div>
             )}
@@ -113,10 +114,10 @@ export default function DashboardPage() {
                   Ville : {shop.city}
                 </p>
               ) : null}
-              <div className="mt-2 flex items-center gap-3">
+              <div className="mt-2 flex flex-wrap items-center gap-3">
                 <Link
                   href="/dashboard/settings"
-                  className="text-sm font-medium text-blue-700 hover:underline"
+                  className="text-sm font-medium text-teal-700 hover:underline"
                 >
                   Modifier ma boutique
                 </Link>
@@ -158,7 +159,7 @@ export default function DashboardPage() {
 
               <div className="rounded-lg bg-white p-4 shadow">
                 <h3 className="mb-2 font-semibold text-gray-900">
-                  Commandes recentes
+                  Commandes récentes
                 </h3>
                 {stats.recent_orders.length === 0 ? (
                   <p className="text-sm text-gray-600">
@@ -183,7 +184,7 @@ export default function DashboardPage() {
                 )}
                 <Link
                   href="/dashboard/orders"
-                  className="mt-3 inline-block text-sm font-medium text-blue-700 hover:underline"
+                  className="mt-3 inline-block text-sm font-medium text-teal-700 hover:underline"
                 >
                   Voir toutes les commandes
                 </Link>
@@ -197,17 +198,18 @@ export default function DashboardPage() {
             Vous n&apos;avez pas encore de boutique
           </h2>
           <p className="mt-1 text-sm text-gray-600">
-            Creez votre boutique en une minute pour commencer a vendre.
+            Créez votre boutique en une minute pour commencer à vendre.
           </p>
           <Link
             href="/dashboard/settings"
-            className="mt-3 inline-block rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-800"
+            className="mt-3 inline-block rounded-md bg-teal-700 px-4 py-2 text-sm text-white hover:bg-teal-800"
           >
-            Creer ma boutique
+            Créer ma boutique
           </Link>
         </div>
       )}
-            <InviteCard />
+
+      <InviteCard />
     </div>
   );
 }
