@@ -14,8 +14,12 @@ interface LoginResponse {
 // Regex de base pour la structure email
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|org|net|edu|gov|mil|sn|fr|io|co|ai|me|info|biz|[a-zA-Z]{3,}$)/i;
 
-// Liste des domaines interdits ou mal orthographiés fréquemment
+// Liste des domaines suspects ou bloqués (incluant cmail, qmail et leurs variantes)
 const TYPO_DOMAINS: { [key: string]: string } = {
+  "cmail.com": "gmail.com",
+  "cmaile.com": "gmail.com",
+  "qmail.com": "gmail.com",
+  "qmaile.com": "gmail.com",
   "gmaile.com": "gmail.com",
   "gamil.com": "gmail.com",
   "gmial.com": "gmail.com",
@@ -47,10 +51,10 @@ export default function RegisterPage() {
       return;
     }
 
-    // 2. Extraction du domaine pour vérifier les fautes de frappe courantes
+    // 2. Extraction du domaine pour bloquer les domaines interdits
     const domain = cleanEmail.split("@")[1];
     if (TYPO_DOMAINS[domain]) {
-      setError(`Domaine suspect détecté ("${domain}"). Vouliez-vous plutôt écrire "@${TYPO_DOMAINS[domain]}" ?`);
+      setError(`Le domaine "${domain}" n'est pas autorisé. Veuillez utiliser un fournisseur valide (ex: gmail.com).`);
       return;
     }
 
