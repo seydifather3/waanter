@@ -11,6 +11,21 @@ interface LoginResponse {
   token_type: string;
 }
 
+// Regex de base pour la structure email
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|org|net|edu|gov|mil|sn|fr|io|co|ai|me|info|biz|[a-zA-Z]{3,}$)/i;
+
+// Liste des domaines interdits ou mal orthographiés fréquemment
+const TYPO_DOMAINS: { [key: string]: string } = {
+  "gmaile.com": "gmail.com",
+  "gamil.com": "gmail.com",
+  "gmial.com": "gmail.com",
+  "gmaill.com": "gmail.com",
+  "yaho.com": "yahoo.com",
+  "yahou.com": "yahoo.com",
+  "hotmaile.com": "hotmail.com",
+  "hotmil.com": "hotmail.com",
+};
+
 export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -23,13 +38,29 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // 1. Vérification de la structure générale de l'email
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      setError("Veuillez entrer une adresse e-mail valide (ex: nom@domaine.com)");
+      return;
+    }
+
+    // 2. Extraction du domaine pour vérifier les fautes de frappe courantes
+    const domain = cleanEmail.split("@")[1];
+    if (TYPO_DOMAINS[domain]) {
+      setError(`Domaine suspect détecté ("${domain}"). Vouliez-vous plutôt écrire "@${TYPO_DOMAINS[domain]}" ?`);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      await api.post("/api/v1/auth/register", { name, email, phone, password });
+      await api.post("/api/v1/auth/register", { name, email: cleanEmail, phone, password });
 
       const loginData = await api.post<LoginResponse>("/api/v1/auth/login", {
-        identifier: email,
+        identifier: cleanEmail,
         password,
       });
       saveToken(loginData.access_token);
@@ -80,6 +111,7 @@ export default function RegisterPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="votre@email.com"
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-teal-600 focus:outline-none"
             />
           </div>
